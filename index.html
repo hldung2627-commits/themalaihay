@@ -35,6 +35,7 @@
             grid-template-columns: 80px repeat(7, minmax(120px, 1fr));
             border-top: 1px solid #e2e8f0;
             border-left: 1px solid #e2e8f0;
+            position: relative;
         }
         .weekly-cell {
             border-right: 1px solid #e2e8f0;
@@ -47,6 +48,14 @@
             font-weight: bold;
             text-align: center;
             padding: 12px 8px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .weekly-header:first-child {
+            z-index: 20;
+            left: 0;
+            border-right: 1px solid #e2e8f0;
         }
         .time-col {
             background-color: #f8fafc;
@@ -57,6 +66,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
         }
     </style>
 </head>
@@ -163,16 +177,6 @@
             
             <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col h-full overflow-hidden">
                 
-                <!-- Tab Controls -->
-                <div class="flex gap-2 mb-4 border-b border-slate-100 pb-4">
-                    <button id="tab-month" onclick="switchView('month')" class="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md transition-all">
-                        <i class="fa-regular fa-calendar mr-1"></i> Lịch Tháng
-                    </button>
-                    <button id="tab-week" onclick="switchView('week')" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">
-                        <i class="fa-solid fa-table-cells mr-1"></i> Thời Khóa Biểu Tuần
-                    </button>
-                </div>
-
                 <!-- VIEW 1: LỊCH THÁNG -->
                 <div id="view-month" class="flex-1 flex flex-col">
                     <!-- Header Lịch -->
@@ -182,15 +186,23 @@
                             <p class="text-xs text-slate-400">Xem tổng quan tất cả các lớp học diễn ra trong ngày</p>
                         </div>
                         
-                        <!-- Chuyển động tháng -->
-                        <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
-                            <button onclick="prevMonth()" class="p-1.5 hover:bg-white text-slate-600 rounded-lg transition-all text-xs">
-                                <i class="fa-solid fa-chevron-left"></i>
+                        <!-- Actions -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Nút mở TKB Tuần -->
+                            <button onclick="openWeeklyModal()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-table-cells"></i> Thời Khóa Biểu Tuần
                             </button>
-                            <span class="text-xs font-bold px-2 text-slate-700 cursor-pointer hover:text-blue-600" onclick="resetToCurrentMonth()" title="Về tháng hiện tại" id="current-month-display">Tháng ...</span>
-                            <button onclick="nextMonth()" class="p-1.5 hover:bg-white text-slate-600 rounded-lg transition-all text-xs">
-                                <i class="fa-solid fa-chevron-right"></i>
-                            </button>
+                            
+                            <!-- Chuyển động tháng -->
+                            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+                                <button onclick="prevMonth()" class="p-1.5 hover:bg-white text-slate-600 rounded-lg transition-all text-xs">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <span class="text-xs font-bold px-2 text-slate-700 cursor-pointer hover:text-blue-600" onclick="resetToCurrentMonth()" title="Về tháng hiện tại" id="current-month-display">Tháng ...</span>
+                                <button onclick="nextMonth()" class="p-1.5 hover:bg-white text-slate-600 rounded-lg transition-all text-xs">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -230,34 +242,47 @@
                     </div>
                 </div>
 
-                <!-- VIEW 2: THỜI KHÓA BIỂU TUẦN -->
-                <div id="view-week" class="hidden flex-1 flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h2 class="font-extrabold text-xl text-slate-900 tracking-tight">Thời Khóa Biểu Tuần</h2>
-                            <p class="text-xs text-slate-400">Quản lý tổng hợp lịch dạy, lịch học và việc cá nhân</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="openTimeSlotModal()" class="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all border border-slate-200">
-                                <i class="fa-solid fa-clock"></i> Quản lý mốc giờ
-                            </button>
-                            <button onclick="openPersonalEventModal()" class="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-md shadow-blue-200">
-                                <i class="fa-solid fa-plus"></i> Thêm Lịch Cá Nhân
-                            </button>
-                        </div>
-                    </div>
+            </div>
+        </section>
+    </main>
 
-                    <!-- Vùng cuộn cho lưới thời khóa biểu -->
-                    <div class="flex-1 overflow-auto rounded-xl border border-slate-200 bg-white">
-                        <div id="weekly-grid-container" class="weekly-grid min-w-[800px]">
+    <!-- Modal 5: Thời Khóa Biểu Tuần -->
+    <div id="modal-weekly-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 flex items-center justify-center p-4 hidden" onclick="closeWeeklyModalOutside(event)">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-[95vw] h-[95vh] max-w-[1600px] flex flex-col transform transition-all overflow-hidden" onclick="event.stopPropagation()">
+            <!-- Header Modal -->
+            <div class="bg-slate-50 px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4 sm:gap-0">
+                <div>
+                    <h3 class="font-extrabold text-xl text-slate-900 tracking-tight flex items-center gap-2">
+                        <i class="fa-solid fa-table-cells text-blue-600"></i> Thời Khóa Biểu Tuần
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">Quản lý tổng hợp lịch dạy, lịch học và việc cá nhân</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <button onclick="openTimeSlotModal()" class="px-3 sm:px-4 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 rounded-xl transition-all border border-slate-200 shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock text-slate-400"></i> Quản lý mốc giờ
+                    </button>
+                    <button onclick="openPersonalEventModal()" class="px-3 sm:px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-md shadow-blue-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Thêm Lịch Cá Nhân
+                    </button>
+                    <div class="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
+                    <button onclick="closeWeeklyModal()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-all border border-slate-200 bg-white sm:border-transparent sm:bg-transparent">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body Modal -->
+            <div class="flex-1 overflow-auto bg-slate-50/50 p-4 sm:p-6">
+                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm h-full flex flex-col">
+                    <div class="flex-1 overflow-auto relative">
+                        <div id="weekly-grid-container" class="weekly-grid min-w-[1000px]">
                             <!-- JS Render bảng thời khóa biểu -->
                         </div>
                     </div>
                 </div>
-
             </div>
-        </section>
-    </main>
+        </div>
+    </div>
 
     <!-- Modal 1: Chi tiết & Điều chỉnh lịch của một ngày -->
     <div id="modal-day-detail" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -772,24 +797,18 @@
             });
         }
 
-        function switchView(view) {
-            const btnMonth = document.getElementById('tab-month');
-            const btnWeek = document.getElementById('tab-week');
-            const vMonth = document.getElementById('view-month');
-            const vWeek = document.getElementById('view-week');
+        function openWeeklyModal() {
+            renderWeeklyView();
+            document.getElementById('modal-weekly-schedule').classList.remove('hidden');
+        }
 
-            if(view === 'month') {
-                vMonth.classList.remove('hidden');
-                vWeek.classList.add('hidden');
-                btnMonth.className = "px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md transition-all";
-                btnWeek.className = "px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
-                renderCalendar();
-            } else {
-                vMonth.classList.add('hidden');
-                vWeek.classList.remove('hidden');
-                btnWeek.className = "px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md transition-all";
-                btnMonth.className = "px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
-                renderWeeklyView();
+        function closeWeeklyModal() {
+            document.getElementById('modal-weekly-schedule').classList.add('hidden');
+        }
+
+        function closeWeeklyModalOutside(e) {
+            if (e.target.id === 'modal-weekly-schedule') {
+                closeWeeklyModal();
             }
         }
 
@@ -1104,6 +1123,17 @@
             currentDate.setDate(1);
             renderCalendar();
         }
+
+        // --- GLOBAL EVENTS ---
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeWeeklyModal();
+                closePersonalEventModal();
+                closeTimeSlotModal();
+                closeStudentDetailModal();
+                closeDayModal();
+            }
+        });
 
         // --- KHỞI CHẠY ---
         window.onload = function() {
