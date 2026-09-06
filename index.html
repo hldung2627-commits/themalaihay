@@ -29,49 +29,6 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-        /* Custom styles cho bảng thời khóa biểu tuần */
-        .weekly-grid {
-            display: grid;
-            grid-template-columns: 80px repeat(7, minmax(120px, 1fr));
-            border-top: 1px solid #e2e8f0;
-            border-left: 1px solid #e2e8f0;
-            position: relative;
-        }
-        .weekly-cell {
-            border-right: 1px solid #e2e8f0;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 8px;
-            min-height: 80px;
-        }
-        .weekly-header {
-            background-color: #f8fafc;
-            font-weight: bold;
-            text-align: center;
-            padding: 12px 8px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .weekly-header:first-child {
-            z-index: 20;
-            left: 0;
-            border-right: 1px solid #e2e8f0;
-        }
-        .time-col {
-            background-color: #f8fafc;
-            font-weight: 600;
-            font-size: 12px;
-            color: #64748b;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            border-right: 1px solid #e2e8f0;
-            border-bottom: 1px solid #e2e8f0;
-        }
     </style>
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col">
@@ -247,37 +204,34 @@
     </main>
 
     <!-- Modal 5: Thời Khóa Biểu Tuần -->
-    <div id="modal-weekly-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 flex items-center justify-center p-4 hidden" onclick="closeWeeklyModalOutside(event)">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-[95vw] h-[95vh] max-w-[1600px] flex flex-col transform transition-all overflow-hidden" onclick="event.stopPropagation()">
+    <div id="modal-weekly-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 flex items-center justify-center p-2 sm:p-4 hidden" onclick="closeWeeklyModalOutside(event)">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-[98vw] h-[96vh] flex flex-col transform transition-all overflow-hidden" onclick="event.stopPropagation()">
             <!-- Header Modal -->
-            <div class="bg-slate-50 px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center shrink-0 gap-4 sm:gap-0">
+            <div class="bg-slate-50 px-4 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <div>
-                    <h3 class="font-extrabold text-xl text-slate-900 tracking-tight flex items-center gap-2">
+                    <h3 class="font-extrabold text-lg sm:text-xl text-slate-900 tracking-tight flex items-center gap-2">
                         <i class="fa-solid fa-table-cells text-blue-600"></i> Thời Khóa Biểu Tuần
                     </h3>
-                    <p class="text-xs text-slate-500 mt-1">Quản lý tổng hợp lịch dạy, lịch học và việc cá nhân</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <button onclick="openTimeSlotModal()" class="px-3 sm:px-4 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 rounded-xl transition-all border border-slate-200 shadow-sm flex items-center gap-1.5">
-                        <i class="fa-solid fa-clock text-slate-400"></i> Quản lý mốc giờ
+                <div class="flex items-center gap-2">
+                    <button onclick="openTimeSlotModal()" class="px-2 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 rounded-xl transition-all border border-slate-200 shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock text-slate-400"></i> <span class="hidden sm:inline">Quản lý giờ</span>
                     </button>
-                    <button onclick="openPersonalEventModal()" class="px-3 sm:px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-md shadow-blue-200 flex items-center gap-1.5">
-                        <i class="fa-solid fa-plus"></i> Thêm Lịch Cá Nhân
+                    <button onclick="openPersonalEventModal()" class="px-2 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-md shadow-blue-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Thêm Lịch</span>
                     </button>
-                    <div class="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
-                    <button onclick="closeWeeklyModal()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-all border border-slate-200 bg-white sm:border-transparent sm:bg-transparent">
+                    <div class="w-px h-6 bg-slate-200 mx-1"></div>
+                    <button onclick="closeWeeklyModal()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-all border border-slate-200 sm:border-transparent">
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Body Modal -->
-            <div class="flex-1 overflow-auto bg-slate-50/50 p-4 sm:p-6">
-                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm h-full flex flex-col">
-                    <div class="flex-1 overflow-auto relative">
-                        <div id="weekly-grid-container" class="weekly-grid min-w-[1000px]">
-                            <!-- JS Render bảng thời khóa biểu -->
-                        </div>
+            <!-- Body Modal: STRICT NO SCROLL -->
+            <div class="flex-1 p-1 sm:p-2 overflow-hidden bg-slate-50/50">
+                <div class="rounded-xl border border-slate-200 bg-white shadow-sm w-full h-full overflow-hidden">
+                    <div id="weekly-grid-container" class="w-full h-full">
+                        <!-- JS Render bảng thời khóa biểu TỰ CO GIÃN -->
                     </div>
                 </div>
             </div>
@@ -736,27 +690,31 @@
 
         function renderWeeklyView() {
             const container = document.getElementById('weekly-grid-container');
-            container.innerHTML = "";
+            const rowCount = timeSlots.length + 1; // Số lượng mốc giờ + 1 dòng "Chưa xếp"
+            
+            // Kỹ thuật Grid Fraction (1fr): Ép toàn bộ các dòng chia đều không gian height có sẵn, tuyệt đối không scroll
+            let html = `
+                <div class="w-full h-full grid grid-cols-[45px_repeat(7,minmax(0,1fr))] sm:grid-cols-[65px_repeat(7,minmax(0,1fr))]" 
+                     style="grid-template-rows: auto repeat(${rowCount}, minmax(0, 1fr));">
+            `;
 
-            // Header hàng
-            let headerHTML = `<div class="weekly-header border-b border-slate-200">Giờ / Thứ</div>`;
+            // 1. Dòng Header (Các thứ) - Sẽ tự động ôm sát text do set là 'auto'
+            html += `<div class="bg-slate-100 border-b border-r border-slate-200 flex items-center justify-center text-[10px] sm:text-xs font-bold text-slate-500">Giờ</div>`;
             DAYS_OF_WEEK.forEach(d => {
-                headerHTML += `<div class="weekly-header border-b border-slate-200 text-slate-700">${d.label}</div>`;
+                html += `<div class="bg-slate-100 border-b border-r border-slate-200 flex items-center justify-center py-1 sm:py-2">
+                            <span class="text-[10px] sm:text-xs font-bold text-slate-700">${d.label}</span>
+                         </div>`;
             });
-            container.innerHTML += headerHTML;
 
-            // Helper render cell content
+            // Hàm helper vẽ nội dung 1 ô (Events)
             const renderCellEvents = (dayId, timeSlotStr) => {
-                let cellHtml = `<div class="flex flex-col gap-1.5 h-full relative group">`;
-                
-                // Nút thêm nhanh event tại ô (ẩn, hiện khi hover) - tương lai có thể pt
+                let cellHtml = `<div class="w-full h-full p-0.5 sm:p-1 flex flex-col gap-0.5 sm:gap-1 overflow-hidden">`;
                 
                 // Lọc Học sinh
                 students.forEach(s => {
                     if(s.fixedDays.includes(dayId) && s.timeSlot === timeSlotStr) {
-                        cellHtml += `<div class="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[10px] p-1.5 rounded-lg shadow-sm font-semibold flex flex-col leading-tight cursor-pointer" onclick="openStudentDetail('${s.id}')">
-                            <span class="font-bold">${s.name}</span>
-                            <span class="text-[8px] opacity-80 uppercase mt-0.5">Dạy học</span>
+                        cellHtml += `<div class="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[9px] sm:text-[11px] px-1 py-0.5 rounded shadow-sm font-bold truncate cursor-pointer leading-tight shrink-0" onclick="openStudentDetail('${s.id}')" title="${s.name} - Dạy học">
+                            ${s.name}
                         </div>`;
                     }
                 });
@@ -765,13 +723,9 @@
                 personalEvents.forEach(pe => {
                     if(pe.day == dayId && pe.time === timeSlotStr) {
                         const bg = pe.type === 'study' ? 'bg-blue-100 border-blue-200 text-blue-800' : 'bg-orange-100 border-orange-200 text-orange-800';
-                        const typeLabel = pe.type === 'study' ? 'Học cá nhân' : 'Việc cá nhân';
-                        cellHtml += `<div class="${bg} border text-[10px] p-1.5 rounded-lg shadow-sm font-semibold flex flex-col leading-tight relative group/item">
-                            <span class="font-bold">${pe.name}</span>
-                            <span class="text-[8px] opacity-80 uppercase mt-0.5">${typeLabel}</span>
-                            ${pe.note ? `<span class="text-[9px] mt-1 italic font-normal line-clamp-1">${pe.note}</span>` : ''}
-                            
-                            <button onclick="deletePersonalEvent('${pe.id}')" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[8px] hidden group-hover/item:flex items-center justify-center shadow-md">
+                        cellHtml += `<div class="${bg} border text-[9px] sm:text-[11px] px-1 py-0.5 rounded shadow-sm font-bold truncate relative group/item leading-tight shrink-0" title="${pe.name}${pe.note ? ' - ' + pe.note : ''}">
+                            ${pe.name}
+                            <button onclick="deletePersonalEvent('${pe.id}')" class="absolute top-0 right-0 w-5 h-full bg-red-500 text-white rounded-r text-[9px] hidden group-hover/item:flex items-center justify-center">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>`;
@@ -782,19 +736,30 @@
                 return cellHtml;
             };
 
-            // Dòng: Chưa xếp giờ (cho học sinh/event cũ)
-            container.innerHTML += `<div class="time-col border-b border-slate-200 bg-slate-100/50 flex-col"><span class="font-bold text-slate-700">Chưa xếp</span><span class="text-[9px] font-normal">Tự do</span></div>`;
+            // 2. Dòng "Chưa xếp" (min-h-0 kết hợp overflow-hidden để cắt phần thừa nếu quá dài, tránh vỡ layout)
+            html += `<div class="border-b border-r border-slate-200 bg-slate-50 flex items-center justify-center text-center p-0.5">
+                        <span class="text-[9px] sm:text-[10px] font-bold text-slate-500 leading-tight">Chưa xếp</span>
+                     </div>`;
             DAYS_OF_WEEK.forEach(d => {
-                container.innerHTML += `<div class="weekly-cell bg-slate-50/30">${renderCellEvents(d.id, "")}</div>`;
+                html += `<div class="border-b border-r border-slate-200 bg-slate-50/30 overflow-hidden hover:bg-slate-50 transition-colors min-h-0">
+                            ${renderCellEvents(d.id, "")}
+                         </div>`;
             });
 
-            // Dòng: Các mốc giờ
+            // 3. Các dòng Mốc giờ (Số dòng sinh ra tự động dựa đúng vào mảng timeSlots)
             timeSlots.forEach(time => {
-                container.innerHTML += `<div class="time-col border-b border-slate-200">${time}</div>`;
+                html += `<div class="border-b border-r border-slate-200 bg-slate-50 flex items-center justify-center p-0.5">
+                            <span class="text-[10px] sm:text-xs font-bold text-slate-700">${time}</span>
+                         </div>`;
                 DAYS_OF_WEEK.forEach(d => {
-                    container.innerHTML += `<div class="weekly-cell hover:bg-slate-50 transition-colors">${renderCellEvents(d.id, time)}</div>`;
+                    html += `<div class="border-b border-r border-slate-200 overflow-hidden hover:bg-slate-50 transition-colors min-h-0">
+                                ${renderCellEvents(d.id, time)}
+                             </div>`;
                 });
             });
+
+            html += `</div>`; // Đóng lưới grid
+            container.innerHTML = html;
         }
 
         function openWeeklyModal() {
