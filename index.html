@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phần mềm Quản lý Lịch học Học sinh</title>
-    <!-- Tailwind CSS để dựng giao diện hiện đại -->
+    <title>Phần mềm Quản lý Lịch học Học sinh & Cá nhân</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Inter & Font Awesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,7 +15,6 @@
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
         }
-        /* Custom scrollbar cho các danh sách học sinh */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -30,6 +29,35 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        /* Custom styles cho bảng thời khóa biểu tuần */
+        .weekly-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(7, minmax(120px, 1fr));
+            border-top: 1px solid #e2e8f0;
+            border-left: 1px solid #e2e8f0;
+        }
+        .weekly-cell {
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px;
+            min-height: 80px;
+        }
+        .weekly-header {
+            background-color: #f8fafc;
+            font-weight: bold;
+            text-align: center;
+            padding: 12px 8px;
+        }
+        .time-col {
+            background-color: #f8fafc;
+            font-weight: 600;
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col">
@@ -43,14 +71,14 @@
                 </div>
                 <div>
                     <h1 class="font-black text-lg text-slate-900 tracking-tight">CLASSMATE</h1>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Hệ thống quản lý lịch học thông minh</p>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Hệ thống quản lý lịch thông minh</p>
                 </div>
             </div>
             
             <div class="flex items-center gap-4">
-                <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                <span id="header-current-month" class="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Tháng 7/2026
+                    Đang tải...
                 </span>
             </div>
         </div>
@@ -72,10 +100,26 @@
                 <form id="add-student-form" onsubmit="handleAddStudent(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Họ và tên</label>
-                        <input type="text" id="student-name" required placeholder="Ví dụ: Nguyễn Văn A"
+                        <input type="text" id="student-name" required placeholder="Ví dụ: Nguyễn Văn Phú"
                             class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     </div>
                     
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Ngày bắt đầu</label>
+                            <input type="date" id="student-start-date" required
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mốc giờ học</label>
+                            <select id="student-time-slot" 
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                                <option value="">-- Chưa xếp giờ --</option>
+                                <!-- JS sẽ render mốc giờ vào đây -->
+                            </select>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Lịch học cố định trong tuần</label>
                         <div class="grid grid-cols-4 gap-2" id="days-checkbox-group">
@@ -114,66 +158,104 @@
 
         </section>
 
-        <!-- Cột Phải: Lịch tháng tổng quan (8 cols) -->
+        <!-- Cột Phải: Lịch tháng tổng quan & Lịch tuần (8 cols) -->
         <section class="lg:col-span-8 flex flex-col gap-4">
             
-            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col h-full">
-                <!-- Header Lịch -->
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5 pb-4 border-b border-slate-100">
-                    <div>
-                        <h2 class="font-extrabold text-xl text-slate-900 tracking-tight" id="calendar-title">Tháng 7/2026</h2>
-                        <p class="text-xs text-slate-400">Xem tổng quan tất cả các lớp học diễn ra trong ngày</p>
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col h-full overflow-hidden">
+                
+                <!-- Tab Controls -->
+                <div class="flex gap-2 mb-4 border-b border-slate-100 pb-4">
+                    <button id="tab-month" onclick="switchView('month')" class="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md transition-all">
+                        <i class="fa-regular fa-calendar mr-1"></i> Lịch Tháng
+                    </button>
+                    <button id="tab-week" onclick="switchView('week')" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">
+                        <i class="fa-solid fa-table-cells mr-1"></i> Thời Khóa Biểu Tuần
+                    </button>
+                </div>
+
+                <!-- VIEW 1: LỊCH THÁNG -->
+                <div id="view-month" class="flex-1 flex flex-col">
+                    <!-- Header Lịch -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+                        <div>
+                            <h2 class="font-extrabold text-xl text-slate-900 tracking-tight" id="calendar-title">Tháng ...</h2>
+                            <p class="text-xs text-slate-400">Xem tổng quan tất cả các lớp học diễn ra trong ngày</p>
+                        </div>
+                        
+                        <!-- Chuyển động tháng -->
+                        <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+                            <button onclick="prevMonth()" class="p-1.5 hover:bg-white text-slate-600 rounded-lg transition-all text-xs">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span class="text-xs font-bold px-2 text-slate-700 cursor-pointer hover:text-blue-600" onclick="resetToCurrentMonth()" title="Về tháng hiện tại" id="current-month-display">Tháng ...</span>
+                            <button onclick="nextMonth()" class="p-1.5 hover:bg-white text-slate-600 rounded-lg transition-all text-xs">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
                     </div>
-                    
-                    <!-- Chuyển động tháng (Mặc định khoá cứng tháng 7/2026 theo yêu cầu) -->
-                    <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
-                        <button onclick="prevMonth()" class="p-1.5 hover:bg-white text-slate-600 rounded-lg transition-all text-xs">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <span class="text-xs font-bold px-2 text-slate-700" id="current-month-display">Tháng 07, 2026</span>
-                        <button onclick="nextMonth()" class="p-1.5 hover:bg-white text-slate-600 rounded-lg transition-all text-xs">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
+
+                    <!-- Lưới Thứ trong tuần -->
+                    <div class="grid grid-cols-7 text-center gap-1.5 mb-2">
+                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T2</div>
+                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T3</div>
+                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T4</div>
+                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T5</div>
+                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T6</div>
+                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T7</div>
+                        <div class="text-[11px] font-bold text-red-500/70 uppercase tracking-wider py-1">CN</div>
+                    </div>
+
+                    <!-- Lưới Ngày của Lịch -->
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 min-h-[380px]">
+                        <!-- JS render ô ngày tự động -->
+                    </div>
+
+                    <!-- Chú thích màu sắc -->
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap justify-center sm:justify-start gap-4 text-xs text-slate-600">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-200"></span><span class="font-bold text-slate-700">Dạy HS</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-amber-100 border border-amber-200"></span><span class="font-bold text-slate-700">Bù</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-rose-100 border border-rose-200"></span><span class="font-bold text-slate-700">Nghỉ</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-blue-100 border border-blue-200"></span><span class="font-bold text-slate-700">Học cá nhân</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-orange-100 border border-orange-200"></span><span class="font-bold text-slate-700">Việc cá nhân</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Lưới Thứ trong tuần -->
-                <div class="grid grid-cols-7 text-center gap-1.5 mb-2">
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T2</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T3</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T4</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T5</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T6</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">T7</div>
-                    <div class="text-[11px] font-bold text-red-500/70 uppercase tracking-wider py-1">CN</div>
+                <!-- VIEW 2: THỜI KHÓA BIỂU TUẦN -->
+                <div id="view-week" class="hidden flex-1 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="font-extrabold text-xl text-slate-900 tracking-tight">Thời Khóa Biểu Tuần</h2>
+                            <p class="text-xs text-slate-400">Quản lý tổng hợp lịch dạy, lịch học và việc cá nhân</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openTimeSlotModal()" class="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all border border-slate-200">
+                                <i class="fa-solid fa-clock"></i> Quản lý mốc giờ
+                            </button>
+                            <button onclick="openPersonalEventModal()" class="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-md shadow-blue-200">
+                                <i class="fa-solid fa-plus"></i> Thêm Lịch Cá Nhân
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Vùng cuộn cho lưới thời khóa biểu -->
+                    <div class="flex-1 overflow-auto rounded-xl border border-slate-200 bg-white">
+                        <div id="weekly-grid-container" class="weekly-grid min-w-[800px]">
+                            <!-- JS Render bảng thời khóa biểu -->
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Lưới Ngày của Lịch -->
-                <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 min-h-[380px]">
-                    <!-- JS render ô ngày tự động -->
-                </div>
-
-                <!-- Chú thích màu sắc -->
-                <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap justify-center sm:justify-start gap-4 text-xs text-slate-600">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-200"></span>
-                        <span class="font-bold text-slate-700">Học</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded bg-amber-100 border border-amber-200"></span>
-                        <span class="font-bold text-slate-700">Bù</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded bg-rose-100 border border-rose-200"></span>
-                        <span class="font-bold text-slate-700">Nghỉ</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded border border-dashed border-slate-300"></span>
-                        <span>Trống</span>
-                    </div>
-                </div>
             </div>
-
         </section>
     </main>
 
@@ -183,7 +265,7 @@
             <!-- Header Modal -->
             <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-2xl">
                 <div>
-                    <h3 class="font-bold text-base text-slate-900" id="modal-date-title">Ngày 01/07/2026</h3>
+                    <h3 class="font-bold text-base text-slate-900" id="modal-date-title">Ngày ...</h3>
                     <p class="text-xs text-slate-400">Điều chỉnh trạng thái điểm danh buổi học</p>
                 </div>
                 <button onclick="closeDayModal()" class="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all">
@@ -193,21 +275,19 @@
 
             <!-- Body Modal -->
             <div class="p-6">
-                <!-- Danh sách lớp học trong ngày -->
                 <div class="space-y-4">
                     <div class="flex justify-between items-center">
                         <h4 class="font-bold text-xs text-slate-500 uppercase tracking-wider">Danh sách học viên ca này</h4>
                         <button onclick="showAddExtraClassSection()" class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                            <i class="fa-solid fa-plus"></i> Thêm ca học bù
+                            <i class="fa-solid fa-plus"></i> Thêm ca bù
                         </button>
                     </div>
 
-                    <!-- Khu vực thêm nhanh học sinh học bù/học thêm -->
+                    <!-- Khu vực thêm nhanh học sinh học bù -->
                     <div id="add-extra-student-section" class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-3 hidden">
                         <h5 class="text-xs font-bold text-slate-700">Thêm ca bù cho học sinh bất kỳ</h5>
                         <div class="flex gap-2">
                             <select id="extra-student-select" class="flex-1 px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none">
-                                <!-- JS render options -->
                             </select>
                             <button onclick="addExtraStudentToDay()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition-all">
                                 Thêm ca
@@ -215,32 +295,29 @@
                         </div>
                     </div>
 
-                    <!-- Container danh sách điểm danh -->
                     <div id="day-attendance-list" class="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
-                        <!-- JS render danh sách học sinh có lịch trong ngày -->
+                        <!-- JS render danh sách -->
                     </div>
                 </div>
             </div>
 
-            <!-- Footer Modal -->
             <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end gap-2.5 rounded-b-2xl">
                 <button onclick="closeDayModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">Thoát</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal 2: Báo cáo Học tập Cá nhân (Dùng chụp ảnh gửi phụ huynh) -->
+    <!-- Modal 2: Báo cáo Học tập Cá nhân -->
     <div id="modal-student-detail" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full transform scale-95 transition-all my-auto">
-            <!-- Header Modal -->
             <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-2xl">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-md shadow-blue-100" id="detail-student-avatar">
-                        A
                     </div>
                     <div>
-                        <h3 class="font-bold text-base text-slate-900" id="detail-student-name">Học sinh A</h3>
-                        <p class="text-xs text-slate-500" id="detail-student-fixed-days">Lịch cố định: Thứ 2, Thứ 4</p>
+                        <h3 class="font-bold text-base text-slate-900" id="detail-student-name">Học sinh</h3>
+                        <p class="text-[10px] text-slate-500" id="detail-student-start-date">Ngày bắt đầu: --/--/----</p>
+                        <p class="text-[10px] text-slate-500 font-medium" id="detail-student-fixed-days">Lịch: ...</p>
                     </div>
                 </div>
                 <button onclick="closeStudentDetailModal()" class="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all">
@@ -248,12 +325,10 @@
                 </button>
             </div>
 
-            <!-- Body Modal -->
             <div class="p-6">
-                <!-- Thống kê chi tiết tháng này -->
                 <div class="flex justify-between items-end mb-4">
-                    <h4 class="font-bold text-lg text-slate-900" id="detail-month-title">Tháng 7/2026</h4>
-                    <span class="text-xs text-slate-500 italic">*Có thể chụp màn hình phần này gửi Phụ huynh</span>
+                    <h4 class="font-bold text-lg text-slate-900" id="detail-month-title">Tháng ...</h4>
+                    <span class="text-xs text-slate-500 italic">*Có thể chụp phần này gửi Phụ huynh</span>
                 </div>
 
                 <div class="grid grid-cols-3 gap-3 mb-6">
@@ -271,11 +346,8 @@
                     </div>
                 </div>
 
-                <!-- Bảng Lịch Cá Nhân (Dùng để chụp ảnh) -->
                 <div class="border-2 border-slate-100 rounded-2xl p-4 bg-white relative">
-                    <h4 class="text-sm font-bold text-blue-800 mb-4 text-center uppercase tracking-wide" id="capture-title">BÁO CÁO HỌC TẬP - HỌC SINH A</h4>
-                    
-                    <!-- Lưới Thứ trong tuần -->
+                    <h4 class="text-sm font-bold text-blue-800 mb-4 text-center uppercase tracking-wide" id="capture-title">BÁO CÁO HỌC TẬP</h4>
                     <div class="grid grid-cols-7 text-center gap-1 mb-2">
                         <div class="text-[11px] font-bold text-slate-400 py-1">T2</div>
                         <div class="text-[11px] font-bold text-slate-400 py-1">T3</div>
@@ -285,12 +357,7 @@
                         <div class="text-[11px] font-bold text-slate-400 py-1">T7</div>
                         <div class="text-[11px] font-bold text-red-400 py-1">CN</div>
                     </div>
-
-                    <!-- Lưới Ngày -->
-                    <div id="detail-calendar-grid" class="grid grid-cols-7 gap-1.5">
-                        <!-- JS render -->
-                    </div>
-                    
+                    <div id="detail-calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
                     <div class="mt-5 pt-3 border-t border-slate-100 flex justify-center gap-6 text-xs text-slate-600 font-medium">
                         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-200"></span> Đi Học</div>
                         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-200"></span> Học Bù</div>
@@ -298,13 +365,80 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Footer Modal -->
             <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end rounded-b-2xl">
-                <button onclick="closeStudentDetailModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all shadow-md">
-                    Đã hiểu
-                </button>
+                <button onclick="closeStudentDetailModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all shadow-md">Đã hiểu</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Quản lý Mốc giờ -->
+    <div id="modal-time-slots" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-sm w-full transform scale-95 transition-all">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-2xl">
+                <h3 class="font-bold text-base text-slate-900">Quản lý Mốc Giờ</h3>
+                <button onclick="closeTimeSlotModal()" class="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="flex gap-2 mb-4">
+                    <input type="time" id="new-time-slot" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+                    <button onclick="addTimeSlot()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Thêm</button>
+                </div>
+                <div id="time-slots-list" class="space-y-2 max-h-[250px] overflow-y-auto">
+                    <!-- Render time slots -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Thêm Lịch Cá Nhân / Học Cá Nhân -->
+    <div id="modal-personal-event" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full transform scale-95 transition-all">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-2xl">
+                <h3 class="font-bold text-base text-slate-900">Thêm Lịch Cá Nhân</h3>
+                <button onclick="closePersonalEventModal()" class="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+            <form onsubmit="handleSavePersonalEvent(event)" class="p-6 space-y-4">
+                <input type="hidden" id="pe-id">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tên hoạt động</label>
+                    <input type="text" id="pe-name" required placeholder="VD: Học Giải Tích" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Loại lịch</label>
+                    <select id="pe-type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                        <option value="study">📚 Lịch học của tôi</option>
+                        <option value="personal">📝 Việc cá nhân</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Thứ</label>
+                        <select id="pe-day" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                            <option value="1">Thứ 2</option>
+                            <option value="2">Thứ 3</option>
+                            <option value="3">Thứ 4</option>
+                            <option value="4">Thứ 5</option>
+                            <option value="5">Thứ 6</option>
+                            <option value="6">Thứ 7</option>
+                            <option value="0">Chủ Nhật</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mốc giờ</label>
+                        <select id="pe-time" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Ghi chú (Tùy chọn)</label>
+                    <input type="text" id="pe-note" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closePersonalEventModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-100 hover:bg-slate-200 font-bold">Hủy</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-sm bg-blue-600 text-white font-bold">Lưu lại</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -320,41 +454,53 @@
             { id: 0, label: "CN", key: "Sunday" }
         ];
 
-        // Khởi tạo tháng hiện hành mặc định: Tháng 7/2026
-        let currentDate = new Date(2026, 6, 1); // 6 đại diện cho tháng 7 (0-indexed)
-
-        // Dữ liệu học sinh mặc định ban đầu nếu bộ nhớ trống
-        let defaultStudents = [
-            { id: "std-1", name: "Nguyễn Hoàng Minh", fixedDays: [1, 3] }, // Thứ 2, Thứ 4
-            { id: "std-2", name: "Lê Minh Thư", fixedDays: [2, 4] }       // Thứ 3, Thứ 5
-        ];
-
-        // Nhật ký thay đổi buổi học
-        // Trạng thái: "Normal" (Học), "Absent" (Nghỉ), "Extra" (Bù)
-        let defaultSessionLogs = [
-            { dateStr: "2026-07-06", studentId: "std-1", status: "Absent", reason: "Bị ốm sốt siêu vi" },
-            { dateStr: "2026-07-10", studentId: "std-1", status: "Extra", reason: "Học bù cho ngày 6" }
-        ];
-
-        // Load dữ liệu từ LocalStorage hoặc gán mặc định
-        let students = JSON.parse(localStorage.getItem('students')) || defaultStudents;
-        let sessionLogs = JSON.parse(localStorage.getItem('sessionLogs')) || defaultSessionLogs;
-
-        let selectedDateStr = ""; // Lưu trữ ngày đang chọn điều chỉnh
-
-        // Lưu trữ dữ liệu
-        function saveStudents() {
-            localStorage.setItem('students', JSON.stringify(students));
+        // LOGIC FIX: Luôn lấy tháng/năm hiện tại khi mở web
+        let currentDate = new Date();
+        currentDate.setDate(1); // Set về ngày mùng 1 để tránh lỗi chuyển tháng thiếu ngày
+        
+        // Helper lấy format YYYY-MM-DD
+        function getTodayString() {
+            const today = new Date();
+            return formatDateKey(today.getFullYear(), today.getMonth(), today.getDate());
         }
 
-        function saveLogs() {
-            localStorage.setItem('sessionLogs', JSON.stringify(sessionLogs));
+        // --- LOAD DATA TỪ LOCALSTORAGE VÀ MIGRATION ---
+        let students = JSON.parse(localStorage.getItem('students')) || [];
+        let sessionLogs = JSON.parse(localStorage.getItem('sessionLogs')) || [];
+        
+        // Data mới: Lịch cá nhân và Mốc giờ
+        let timeSlots = JSON.parse(localStorage.getItem('timeSlots')) || ["08:00", "14:00", "18:00", "19:30"];
+        let personalEvents = JSON.parse(localStorage.getItem('personalEvents')) || [];
+
+        // MIGRATION: Cập nhật dữ liệu cũ nếu chưa có startDate, timeSlot
+        let dataMigrated = false;
+        students.forEach(s => {
+            if (!s.startDate) {
+                s.startDate = "2000-01-01"; // Mặc định trong quá khứ để không phá vỡ lịch cũ
+                dataMigrated = true;
+            }
+            if (s.timeSlot === undefined) {
+                s.timeSlot = ""; // Chưa gán giờ
+                dataMigrated = true;
+            }
+        });
+        if (dataMigrated) saveStudents();
+        timeSlots.sort(); // Đảm bảo luôn sort mốc giờ
+
+        let selectedDateStr = "";
+
+        // --- CÁC HÀM LƯU DỮ LIỆU ---
+        function saveStudents() { localStorage.setItem('students', JSON.stringify(students)); }
+        function saveLogs() { localStorage.setItem('sessionLogs', JSON.stringify(sessionLogs)); }
+        function saveTimeSlots() { 
+            timeSlots.sort();
+            localStorage.setItem('timeSlots', JSON.stringify(timeSlots)); 
         }
+        function savePersonalEvents() { localStorage.setItem('personalEvents', JSON.stringify(personalEvents)); }
+
 
         // --- 2. RENDER GIAO DIỆN CHÍNH ---
-
-        // Khởi tạo form thêm học sinh
-        function initDaysCheckboxes() {
+        function initAddStudentForm() {
             const container = document.getElementById('days-checkbox-group');
             container.innerHTML = "";
             DAYS_OF_WEEK.forEach(day => {
@@ -365,9 +511,33 @@
                     </label>
                 `;
             });
+            document.getElementById('student-start-date').value = getTodayString();
+            populateTimeSlotSelects();
         }
 
-        // Render danh sách học sinh (Cột trái)
+        function populateTimeSlotSelects() {
+            const studentSelect = document.getElementById('student-time-slot');
+            const eventSelect = document.getElementById('pe-time');
+            
+            let html = `<option value="">-- Chưa xếp giờ --</option>`;
+            let eventHtml = '';
+            timeSlots.forEach(t => {
+                html += `<option value="${t}">${t}</option>`;
+                eventHtml += `<option value="${t}">${t}</option>`;
+            });
+            
+            studentSelect.innerHTML = html;
+            eventSelect.innerHTML = eventHtml;
+        }
+
+        function formatDateKey(year, month, day) {
+            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+        function formatDisplayDate(dateStr) {
+            const p = dateStr.split('-');
+            return `${p[2]}/${p[1]}/${p[0]}`;
+        }
+
         function renderStudentsList() {
             const container = document.getElementById('students-container');
             const searchVal = document.getElementById('search-student').value.toLowerCase().trim();
@@ -382,17 +552,16 @@
             }
 
             filtered.forEach(student => {
-                // Chuyển mảng ID ngày sang chữ hiển thị
-                const daysStr = student.fixedDays.map(d => {
-                    const found = DAYS_OF_WEEK.find(day => day.id === d);
-                    return found ? found.label : "";
-                }).join(", ");
+                const daysStr = student.fixedDays.map(d => DAYS_OF_WEEK.find(day => day.id === d)?.label).join(", ");
+                const timeStr = student.timeSlot ? ` - ${student.timeSlot}` : "";
+                const startStr = student.startDate !== "2000-01-01" ? `Bắt đầu: ${formatDisplayDate(student.startDate)}` : "Đã học từ trước";
 
                 container.innerHTML += `
                     <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between group hover:bg-white hover:shadow-sm transition-all">
                         <div class="min-w-0 flex-1 cursor-pointer" onclick="openStudentDetail('${student.id}')">
                             <h4 class="font-bold text-sm text-slate-900 truncate">${student.name}</h4>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Lịch cố định: <span class="font-bold text-blue-600">${daysStr || 'Chưa có'}</span></p>
+                            <p class="text-[11px] text-slate-500 mt-0.5"><span class="font-bold text-blue-600">${daysStr || 'Chưa có'}${timeStr}</span></p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">${startStr}</p>
                         </div>
                         <div class="flex items-center gap-1">
                             <button onclick="openStudentDetail('${student.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Báo cáo Lịch cá nhân">
@@ -407,65 +576,52 @@
             });
         }
 
-        // Tạo chuỗi mã hóa YYYY-MM-DD
-        function formatDateKey(year, month, day) {
-            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        }
-
-        // Tìm kiếm các ca học/điểm danh phát sinh trong một ngày cụ thể
+        // Cập nhật hàm lấy buổi học, tích hợp kiểm tra startDate
         function getSessionsForDate(dateStr, dayOfWeek) {
             let activeSessions = [];
 
-            // 1. Lọc tất cả học sinh có lịch cố định vào thứ này trong tuần
+            // 1. Học sinh cố định
             students.forEach(student => {
-                if (student.fixedDays.includes(dayOfWeek)) {
-                    // Kiểm tra xem có log thay đổi trạng thái không
+                // KIỂM TRA NGÀY BẮT ĐẦU: Không sinh lịch nếu ngày hiện tại < ngày bắt đầu
+                if (student.fixedDays.includes(dayOfWeek) && dateStr >= student.startDate) {
                     const log = sessionLogs.find(l => l.dateStr === dateStr && l.studentId === student.id);
                     if (log) {
                         activeSessions.push({
-                            studentId: student.id,
-                            studentName: student.name,
-                            status: log.status, // "Normal", "Absent", "Extra"
-                            reason: log.reason || "",
-                            isFixed: true
+                            studentId: student.id, studentName: student.name,
+                            status: log.status, reason: log.reason || "", isFixed: true, timeSlot: student.timeSlot
                         });
                     } else {
-                        // Trạng thái mặc định: Học
                         activeSessions.push({
-                            studentId: student.id,
-                            studentName: student.name,
-                            status: "Normal",
-                            reason: "",
-                            isFixed: true
+                            studentId: student.id, studentName: student.name,
+                            status: "Normal", reason: "", isFixed: true, timeSlot: student.timeSlot
                         });
                     }
                 }
             });
 
-            // 2. Thêm các học sinh có lịch bù (học phụ) không cố định vào ngày này
+            // 2. Học sinh bù
             sessionLogs.forEach(log => {
                 if (log.dateStr === dateStr && log.status === "Extra") {
-                    // Nếu học sinh này không có trong danh sách cố định (để tránh lặp)
                     const isExist = activeSessions.some(s => s.studentId === log.studentId);
                     if (!isExist) {
                         const student = students.find(s => s.id === log.studentId);
                         if (student) {
                             activeSessions.push({
-                                studentId: student.id,
-                                studentName: student.name,
-                                status: "Extra",
-                                reason: log.reason || "",
-                                isFixed: false
+                                studentId: student.id, studentName: student.name,
+                                status: "Extra", reason: log.reason || "", isFixed: false, timeSlot: student.timeSlot // Ca bù có thể không có giờ cố định
                             });
                         }
                     }
                 }
             });
-
             return activeSessions;
         }
 
-        // Render lưới lịch tháng lớn (Cột phải)
+        // Lấy lịch cá nhân cho 1 ngày
+        function getPersonalEventsForDate(dayOfWeek) {
+            return personalEvents.filter(e => e.day == dayOfWeek);
+        }
+
         function renderCalendar() {
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = "";
@@ -473,58 +629,55 @@
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
 
-            // Cập nhật text hiển thị tháng
-            document.getElementById('current-month-display').innerText = `Tháng ${String(month + 1).padStart(2, '0')}, ${year}`;
-            document.getElementById('calendar-title').innerText = `Tháng ${month + 1}/${year}`;
+            const monthDisplay = `Tháng ${String(month + 1).padStart(2, '0')}/${year}`;
+            document.getElementById('current-month-display').innerText = monthDisplay;
+            document.getElementById('header-current-month').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ${monthDisplay}`;
+            document.getElementById('calendar-title').innerText = monthDisplay;
 
-            // Tìm ngày đầu tuần của tháng (Thứ 2 = 1, CN = 0)
             const firstDayIndex = new Date(year, month, 1).getDay(); 
             const totalDaysInMonth = new Date(year, month + 1, 0).getDate(); 
-
-            // Tính số ô trống trước ngày mùng 1 (Đầu tháng để khớp vào Thứ)
-            // Trong JS: 0=CN, 1=T2, 2=T3, 3=T4...
-            // Cần chuyển sang: T2=0, T3=1... CN=6
             const emptySlots = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
 
-            // Render ô trống đầu tháng
+            // Header trống
             for (let i = 0; i < emptySlots; i++) {
-                const emptyCard = document.createElement('div');
-                emptyCard.className = "bg-slate-50/50 border border-slate-100 rounded-2xl";
-                grid.appendChild(emptyCard);
+                grid.insertAdjacentHTML('beforeend', `<div class="bg-slate-50/50 border border-slate-100 rounded-2xl min-h-[75px]"></div>`);
             }
 
-            // Render từng ngày trong tháng
+            // Ngày trong tháng
             for (let day = 1; day <= totalDaysInMonth; day++) {
                 const dateObj = new Date(year, month, day);
-                const dayOfWeek = dateObj.getDay(); // 0-6
+                const dayOfWeek = dateObj.getDay();
                 const dateStr = formatDateKey(year, month, day);
+                const isToday = new Date().toDateString() === dateObj.toDateString();
 
-                // Tạo ô ngày
                 const dayCard = document.createElement('div');
-                dayCard.className = "bg-white border border-slate-200 rounded-2xl p-2 min-h-[75px] hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col justify-between";
+                dayCard.className = "bg-white border border-slate-200 rounded-2xl p-2 min-h-[85px] hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col justify-start overflow-hidden";
                 dayCard.onclick = () => openDayModal(dateStr);
 
-                // Số ngày
                 const dayHeader = document.createElement('div');
-                dayHeader.className = "flex justify-between items-center";
-                
-                const isToday = new Date().toDateString() === dateObj.toDateString();
-                const dayNumSpan = document.createElement('span');
-                dayNumSpan.className = `text-xs font-black w-6 h-6 flex items-center justify-center rounded-full ${
-                    isToday ? 'bg-blue-600 text-white shadow-md' : 'text-slate-800'
-                }`;
-                dayNumSpan.innerText = day;
-                dayHeader.appendChild(dayNumSpan);
-
+                dayHeader.className = "flex justify-between items-center mb-1";
+                dayHeader.innerHTML = `<span class="text-xs font-black w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-blue-600 text-white shadow-md' : 'text-slate-800'}">${day}</span>`;
                 dayCard.appendChild(dayHeader);
 
-                // Body ô ngày: Hiển thị danh sách các học sinh có buổi trong ngày này
                 const dayBody = document.createElement('div');
-                dayBody.className = "space-y-1 mt-1 max-h-[50px] overflow-y-auto w-full";
+                dayBody.className = "space-y-1 w-full flex-1 overflow-y-auto pr-1";
 
-                // Kiểm tra xem ngày này có những học sinh nào học
+                // 1. Render lịch cá nhân (Học/Việc)
+                const pEvents = getPersonalEventsForDate(dayOfWeek);
+                pEvents.forEach(pe => {
+                    const badge = document.createElement('div');
+                    badge.className = `text-[9px] px-1.5 py-0.5 rounded font-bold truncate flex items-center gap-1`;
+                    if(pe.type === 'study') badge.className += " bg-blue-100 text-blue-800 border border-blue-200";
+                    else badge.className += " bg-orange-100 text-orange-800 border border-orange-200";
+                    
+                    badge.innerHTML = `<span>${pe.name}</span>`;
+                    if(pe.time) badge.innerHTML = `<span class="text-[8px] opacity-70">${pe.time}</span> ` + badge.innerHTML;
+                    if(pe.note) badge.title = pe.note;
+                    dayBody.appendChild(badge);
+                });
+
+                // 2. Render lịch dạy học sinh
                 const classesInDay = getSessionsForDate(dateStr, dayOfWeek);
-                
                 classesInDay.forEach(session => {
                     const badge = document.createElement('div');
                     badge.className = `text-[9px] px-1.5 py-0.5 rounded font-bold truncate flex items-center justify-between gap-1`;
@@ -535,13 +688,12 @@
                     } else if (session.status === "Extra") {
                         badge.className += " bg-amber-100 text-amber-800 border border-amber-200";
                         badge.innerHTML = `<span>${session.studentName}</span> <span class="text-[8px] text-amber-600 font-semibold uppercase">Bù</span>`;
-                        if (session.reason) badge.title = `Ghi chú: ${session.reason}`;
+                        if (session.reason) badge.title = session.reason;
                     } else if (session.status === "Absent") {
                         badge.className += " bg-rose-100 text-rose-800 border border-rose-200 line-through opacity-80";
                         badge.innerHTML = `<span>${session.studentName}</span>`;
-                        if (session.reason) badge.title = `Lý do nghỉ: ${session.reason}`;
+                        if (session.reason) badge.title = `Nghỉ: ${session.reason}`;
                     }
-
                     dayBody.appendChild(badge);
                 });
 
@@ -549,71 +701,145 @@
                 grid.appendChild(dayCard);
             }
 
-            // Bổ sung ô trống cuối tháng cho vuông lưới (thường là 35 hoặc 42 ô)
+            // Footer trống
             const totalSlotsRendered = emptySlots + totalDaysInMonth;
             const remainingToFitGrid = totalSlotsRendered <= 35 ? 35 - totalSlotsRendered : 42 - totalSlotsRendered;
             for (let i = 0; i < remainingToFitGrid; i++) {
-                const emptyCard = document.createElement('div');
-                emptyCard.className = "bg-slate-50/50 border border-slate-100 rounded-2xl";
-                grid.appendChild(emptyCard);
+                grid.insertAdjacentHTML('beforeend', `<div class="bg-slate-50/50 border border-slate-100 rounded-2xl min-h-[75px]"></div>`);
             }
         }
 
-        // --- 3. XỬ LÝ SỰ KIỆN HỌC SINH ---
+        function renderWeeklyView() {
+            const container = document.getElementById('weekly-grid-container');
+            container.innerHTML = "";
 
-        // Thêm học sinh mới
+            // Header hàng
+            let headerHTML = `<div class="weekly-header border-b border-slate-200">Giờ / Thứ</div>`;
+            DAYS_OF_WEEK.forEach(d => {
+                headerHTML += `<div class="weekly-header border-b border-slate-200 text-slate-700">${d.label}</div>`;
+            });
+            container.innerHTML += headerHTML;
+
+            // Helper render cell content
+            const renderCellEvents = (dayId, timeSlotStr) => {
+                let cellHtml = `<div class="flex flex-col gap-1.5 h-full relative group">`;
+                
+                // Nút thêm nhanh event tại ô (ẩn, hiện khi hover) - tương lai có thể pt
+                
+                // Lọc Học sinh
+                students.forEach(s => {
+                    if(s.fixedDays.includes(dayId) && s.timeSlot === timeSlotStr) {
+                        cellHtml += `<div class="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[10px] p-1.5 rounded-lg shadow-sm font-semibold flex flex-col leading-tight cursor-pointer" onclick="openStudentDetail('${s.id}')">
+                            <span class="font-bold">${s.name}</span>
+                            <span class="text-[8px] opacity-80 uppercase mt-0.5">Dạy học</span>
+                        </div>`;
+                    }
+                });
+
+                // Lọc Lịch cá nhân
+                personalEvents.forEach(pe => {
+                    if(pe.day == dayId && pe.time === timeSlotStr) {
+                        const bg = pe.type === 'study' ? 'bg-blue-100 border-blue-200 text-blue-800' : 'bg-orange-100 border-orange-200 text-orange-800';
+                        const typeLabel = pe.type === 'study' ? 'Học cá nhân' : 'Việc cá nhân';
+                        cellHtml += `<div class="${bg} border text-[10px] p-1.5 rounded-lg shadow-sm font-semibold flex flex-col leading-tight relative group/item">
+                            <span class="font-bold">${pe.name}</span>
+                            <span class="text-[8px] opacity-80 uppercase mt-0.5">${typeLabel}</span>
+                            ${pe.note ? `<span class="text-[9px] mt-1 italic font-normal line-clamp-1">${pe.note}</span>` : ''}
+                            
+                            <button onclick="deletePersonalEvent('${pe.id}')" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[8px] hidden group-hover/item:flex items-center justify-center shadow-md">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>`;
+                    }
+                });
+
+                cellHtml += `</div>`;
+                return cellHtml;
+            };
+
+            // Dòng: Chưa xếp giờ (cho học sinh/event cũ)
+            container.innerHTML += `<div class="time-col border-b border-slate-200 bg-slate-100/50 flex-col"><span class="font-bold text-slate-700">Chưa xếp</span><span class="text-[9px] font-normal">Tự do</span></div>`;
+            DAYS_OF_WEEK.forEach(d => {
+                container.innerHTML += `<div class="weekly-cell bg-slate-50/30">${renderCellEvents(d.id, "")}</div>`;
+            });
+
+            // Dòng: Các mốc giờ
+            timeSlots.forEach(time => {
+                container.innerHTML += `<div class="time-col border-b border-slate-200">${time}</div>`;
+                DAYS_OF_WEEK.forEach(d => {
+                    container.innerHTML += `<div class="weekly-cell hover:bg-slate-50 transition-colors">${renderCellEvents(d.id, time)}</div>`;
+                });
+            });
+        }
+
+        function switchView(view) {
+            const btnMonth = document.getElementById('tab-month');
+            const btnWeek = document.getElementById('tab-week');
+            const vMonth = document.getElementById('view-month');
+            const vWeek = document.getElementById('view-week');
+
+            if(view === 'month') {
+                vMonth.classList.remove('hidden');
+                vWeek.classList.add('hidden');
+                btnMonth.className = "px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md transition-all";
+                btnWeek.className = "px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+                renderCalendar();
+            } else {
+                vMonth.classList.add('hidden');
+                vWeek.classList.remove('hidden');
+                btnWeek.className = "px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md transition-all";
+                btnMonth.className = "px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+                renderWeeklyView();
+            }
+        }
+
+
+        // --- 3. XỬ LÝ HỌC SINH ---
         function handleAddStudent(e) {
             e.preventDefault();
-            const nameInput = document.getElementById('student-name');
-            const name = nameInput.value.trim();
+            const name = document.getElementById('student-name').value.trim();
+            const startDate = document.getElementById('student-start-date').value;
+            const timeSlot = document.getElementById('student-time-slot').value;
             if (!name) return;
 
-            // Thu thập các thứ học cố định
             const checkedBoxes = document.querySelectorAll('input[name="fixed-days"]:checked');
             const fixedDays = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
 
             const newStudent = {
                 id: "std-" + Date.now(),
                 name: name,
+                startDate: startDate || getTodayString(),
+                timeSlot: timeSlot,
                 fixedDays: fixedDays
             };
 
             students.push(newStudent);
             saveStudents();
             
-            // Reset Form
-            nameInput.value = "";
+            document.getElementById('student-name').value = "";
             checkedBoxes.forEach(cb => cb.checked = false);
 
             renderStudentsList();
             renderCalendar();
+            renderWeeklyView();
         }
 
-        // Xóa học sinh
         function deleteStudent(id) {
-            if (confirm("Bạn có chắc chắn muốn xóa học sinh này không? Lịch sử điểm danh và ca học của học sinh này sẽ bị ẩn.")) {
+            if (confirm("Xóa học sinh này? Toàn bộ lịch sử sẽ bị ẩn.")) {
                 students = students.filter(s => s.id !== id);
-                // Giữ lại log để lưu trữ, hoặc lọc sạch nếu cần
                 saveStudents();
                 renderStudentsList();
                 renderCalendar();
+                renderWeeklyView();
             }
         }
 
-        // --- 4. POPUP ĐIỂM DANH THEO NGÀY ---
-
-        // Mở popup chi tiết ngày
+        // --- 4. POPUP ĐIỂM DANH (LỊCH THÁNG) ---
         function openDayModal(dateStr) {
             selectedDateStr = dateStr;
-            const parts = dateStr.split("-");
-            document.getElementById('modal-date-title').innerText = `Ngày ${parts[2]}/${parts[1]}/${parts[0]}`;
-
-            // Ẩn bảng thêm học sinh bù lúc đầu
+            document.getElementById('modal-date-title').innerText = `Ngày ${formatDisplayDate(dateStr)}`;
             document.getElementById('add-extra-student-section').classList.add('hidden');
-
             renderDayAttendanceList();
-            
-            // Hiện modal
             document.getElementById('modal-day-detail').classList.remove('hidden');
         }
 
@@ -621,62 +847,41 @@
             document.getElementById('modal-day-detail').classList.add('hidden');
         }
 
-        // Hiển thị phần thêm nhanh học sinh học bù
         function showAddExtraClassSection() {
-            const section = document.getElementById('add-extra-student-section');
             const select = document.getElementById('extra-student-select');
-            
             select.innerHTML = "";
-            // Chỉ thêm những học sinh chưa có bất kỳ lịch nào vào ngày này
-            const dateObj = new Date(selectedDateStr);
-            const dayOfWeek = dateObj.getDay();
+            const [y, m, d] = selectedDateStr.split('-');
+            const dayOfWeek = new Date(y, m - 1, d).getDay();
             const activeSessions = getSessionsForDate(selectedDateStr, dayOfWeek);
-
             const availableStudents = students.filter(student => !activeSessions.some(as => as.studentId === student.id));
 
             if (availableStudents.length === 0) {
                 alert("Tất cả học sinh đã có lịch học trong ngày này.");
                 return;
             }
-
-            availableStudents.forEach(s => {
-                select.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-            });
-
-            section.classList.remove('hidden');
+            availableStudents.forEach(s => { select.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
+            document.getElementById('add-extra-student-section').classList.remove('hidden');
         }
 
-        // Đăng ký học sinh đi học bù cho ngày được chọn
         function addExtraStudentToDay() {
-            const select = document.getElementById('extra-student-select');
-            const studentId = select.value;
+            const studentId = document.getElementById('extra-student-select').value;
             if (!studentId) return;
-
-            // Lưu log là học bù ("Extra")
-            sessionLogs.push({
-                dateStr: selectedDateStr,
-                studentId: studentId,
-                status: "Extra",
-                reason: "" // Mặc định trống, có thể điền ghi chú sau
-            });
-
+            sessionLogs.push({ dateStr: selectedDateStr, studentId: studentId, status: "Extra", reason: "" });
             saveLogs();
             renderCalendar();
             renderDayAttendanceList();
             document.getElementById('add-extra-student-section').classList.add('hidden');
         }
 
-        // Render danh sách học sinh trong một ngày và nút tương tác
         function renderDayAttendanceList() {
             const listContainer = document.getElementById('day-attendance-list');
             listContainer.innerHTML = "";
-
-            const dateObj = new Date(selectedDateStr);
-            const dayOfWeek = dateObj.getDay();
+            const [y, m, d] = selectedDateStr.split('-');
+            const dayOfWeek = new Date(y, m - 1, d).getDay();
             const sessions = getSessionsForDate(selectedDateStr, dayOfWeek);
 
             if (sessions.length === 0) {
-                listContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Không có lịch học cố định hay buổi học bù nào hôm nay.</p>`;
+                listContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Trống</p>`;
                 return;
             }
 
@@ -684,274 +889,225 @@
                 const sessionRow = document.createElement('div');
                 sessionRow.className = `p-3.5 rounded-xl border flex flex-col gap-3 transition-all ${
                     session.status === "Absent" ? 'bg-rose-50/50 border-rose-200' :
-                    session.status === "Extra" ? 'bg-amber-50/50 border-amber-200' :
-                    'bg-slate-50/60 border-slate-200'
+                    session.status === "Extra" ? 'bg-amber-50/50 border-amber-200' : 'bg-slate-50/60 border-slate-200'
                 }`;
 
-                // Header buổi học
+                const timeTag = session.timeSlot ? `<span class="bg-slate-200 text-slate-600 text-[9px] px-1.5 py-0.5 rounded font-bold">${session.timeSlot}</span>` : "";
                 const isFixedTag = session.isFixed 
                     ? `<span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold">Cố định</span>`
-                    : `<span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold">Học bù</span>`;
+                    : `<span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold">Bù</span>`;
 
                 sessionRow.innerHTML = `
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <h5 class="font-bold text-sm text-slate-900">${session.studentName}</h5>
+                            ${timeTag}
                             ${isFixedTag}
                         </div>
-                        
-                        <!-- Toggle Trạng Thái -->
-                        <div class="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm" id="status-toggle-${session.studentId}">
-                            <!-- Sẽ render bên dưới để bảo toàn tương tác -->
-                        </div>
+                        <div class="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm" id="status-toggle-${session.studentId}"></div>
                     </div>
-                    
-                    <!-- Nhập lý do nghỉ hoặc Ghi chú học bù -->
                     <div id="reason-container-${session.studentId}" class="flex flex-col gap-1 hidden">
                         <label class="text-[10px] font-bold text-slate-500 uppercase" id="reason-label-${session.studentId}">Ghi chú</label>
                         <input type="text" id="reason-input-${session.studentId}" 
-                            class="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+                            class="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm"
                             value="${session.reason || ''}">
                     </div>
                 `;
-
                 listContainer.appendChild(sessionRow);
 
-                const btnToggleContainer = document.getElementById(`status-toggle-${session.studentId}`);
-                const reasonContainer = document.getElementById(`reason-container-${session.studentId}`);
-                const reasonInput = document.getElementById(`reason-input-${session.studentId}`);
-                const reasonLabel = document.getElementById(`reason-label-${session.studentId}`);
+                const btnContainer = document.getElementById(`status-toggle-${session.studentId}`);
+                const rContainer = document.getElementById(`reason-container-${session.studentId}`);
+                const rInput = document.getElementById(`reason-input-${session.studentId}`);
+                const rLabel = document.getElementById(`reason-label-${session.studentId}`);
 
-                // Xử lý ẩn hiện input ghi chú tùy theo trạng thái
                 if (session.status === "Absent") {
-                    reasonContainer.classList.remove('hidden');
-                    reasonLabel.innerText = "Lý do nghỉ học";
-                    reasonInput.placeholder = "Ví dụ: Ốm, việc gia đình...";
+                    rContainer.classList.remove('hidden'); rLabel.innerText = "Lý do nghỉ"; rInput.placeholder = "Ốm, bận...";
                 } else if (session.status === "Extra") {
-                    reasonContainer.classList.remove('hidden');
-                    reasonLabel.innerText = "Ghi chú học bù";
-                    reasonInput.placeholder = "Ví dụ: Bù cho Thứ 4 tuần trước...";
+                    rContainer.classList.remove('hidden'); rLabel.innerText = "Ghi chú bù"; rInput.placeholder = "Bù cho ngày...";
                 }
 
-                // Nếu là ngày cố định: Có các lựa chọn (Học thường, Nghỉ)
                 if (session.isFixed) {
-                    // Nút HỌC
                     const btnNormal = document.createElement('button');
-                    btnNormal.className = `px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                        session.status === "Normal" 
-                        ? 'bg-emerald-600 text-white' 
-                        : 'text-slate-600 hover:bg-slate-50'
-                    }`;
+                    btnNormal.className = `px-2.5 py-1 text-xs font-bold rounded-md ${session.status === "Normal" ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`;
                     btnNormal.innerText = "Học";
-                    btnNormal.onclick = () => updateAttendanceStatus(session.studentId, "Normal");
+                    btnNormal.onclick = () => updateAttendance(session.studentId, "Normal");
 
-                    // Nút NGHỈ
                     const btnAbsent = document.createElement('button');
-                    btnAbsent.className = `px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                        session.status === "Absent" 
-                        ? 'bg-rose-600 text-white' 
-                        : 'text-slate-600 hover:bg-slate-50'
-                    }`;
+                    btnAbsent.className = `px-2.5 py-1 text-xs font-bold rounded-md ${session.status === "Absent" ? 'bg-rose-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`;
                     btnAbsent.innerText = "Nghỉ";
-                    btnAbsent.onclick = () => updateAttendanceStatus(session.studentId, "Absent");
+                    btnAbsent.onclick = () => updateAttendance(session.studentId, "Absent");
 
-                    btnToggleContainer.appendChild(btnNormal);
-                    btnToggleContainer.appendChild(btnAbsent);
-                } 
-                // Nếu là ca bù tự tạo thủ công: Cho phép chọn (Học bù, Hủy ca bù)
-                else {
-                    // Nút BÙ
+                    btnContainer.append(btnNormal, btnAbsent);
+                } else {
                     const btnExtra = document.createElement('button');
-                    btnExtra.className = `px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                        session.status === "Extra" 
-                        ? 'bg-amber-600 text-white' 
-                        : 'text-slate-600 hover:bg-slate-50'
-                    }`;
+                    btnExtra.className = `px-2.5 py-1 text-xs font-bold rounded-md ${session.status === "Extra" ? 'bg-amber-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`;
                     btnExtra.innerText = "Bù";
-                    btnExtra.onclick = () => updateAttendanceStatus(session.studentId, "Extra");
+                    btnExtra.onclick = () => updateAttendance(session.studentId, "Extra");
 
-                    // Nút HUỶ (Xóa khỏi danh sách log của ngày bù hôm đó)
-                    const btnDelete = document.createElement('button');
-                    btnDelete.className = `px-2.5 py-1 text-xs font-bold rounded-md text-rose-600 hover:bg-rose-50 transition-all`;
-                    btnDelete.innerHTML = `<i class="fa-solid fa-trash-can"></i> Hủy ca`;
-                    btnDelete.onclick = () => removeExtraSession(session.studentId);
-
-                    btnToggleContainer.appendChild(btnExtra);
-                    btnToggleContainer.appendChild(btnDelete);
+                    const btnDel = document.createElement('button');
+                    btnDel.className = `px-2.5 py-1 text-xs font-bold rounded-md text-rose-600 hover:bg-rose-50`;
+                    btnDel.innerHTML = `<i class="fa-solid fa-trash-can"></i>`;
+                    btnDel.onclick = () => {
+                        sessionLogs = sessionLogs.filter(l => !(l.dateStr === selectedDateStr && l.studentId === session.studentId));
+                        saveLogs(); renderCalendar(); renderDayAttendanceList();
+                    };
+                    btnContainer.append(btnExtra, btnDel);
                 }
 
-                // Gắn bộ lắng nghe cho việc nhập lý do/ghi chú
-                if (reasonInput) {
-                    reasonInput.addEventListener('change', () => {
-                        // Cập nhật reason trực tiếp vào log mà không đổi trạng thái
-                        updateSessionReason(session.studentId, reasonInput.value);
+                if (rInput) {
+                    rInput.addEventListener('change', () => {
+                        let idx = sessionLogs.findIndex(l => l.dateStr === selectedDateStr && l.studentId === session.studentId);
+                        if (idx !== -1) { sessionLogs[idx].reason = rInput.value; saveLogs(); renderCalendar(); }
                     });
                 }
             });
         }
 
-        // Cập nhật text ghi chú/lý do
-        function updateSessionReason(studentId, reason) {
-            let logIndex = sessionLogs.findIndex(log => log.dateStr === selectedDateStr && log.studentId === studentId);
-            if (logIndex !== -1) {
-                sessionLogs[logIndex].reason = reason;
-                saveLogs();
-                // renderCalendar để cập nhật tooltip bên ngoài lịch
-                renderCalendar(); 
-            }
-        }
-
-        // Cập nhật trạng thái buổi học
-        function updateAttendanceStatus(studentId, status) {
-            let logIndex = sessionLogs.findIndex(log => log.dateStr === selectedDateStr && log.studentId === studentId);
-
-            if (logIndex !== -1) {
-                // Nếu đổi về mặc định là "Normal" và buổi đó là cố định -> xóa log đi để tiết kiệm bộ nhớ
-                if (status === "Normal") {
-                    sessionLogs.splice(logIndex, 1);
-                } else {
-                    sessionLogs[logIndex].status = status;
-                }
+        function updateAttendance(studentId, status) {
+            let idx = sessionLogs.findIndex(l => l.dateStr === selectedDateStr && l.studentId === studentId);
+            if (idx !== -1) {
+                if (status === "Normal") sessionLogs.splice(idx, 1);
+                else sessionLogs[idx].status = status;
             } else {
-                // Nếu chưa có log, tạo một log mới
-                sessionLogs.push({
-                    dateStr: selectedDateStr,
-                    studentId: studentId,
-                    status: status,
-                    reason: ""
-                });
+                sessionLogs.push({ dateStr: selectedDateStr, studentId: studentId, status: status, reason: "" });
             }
-
-            saveLogs();
-            renderCalendar();
-            renderDayAttendanceList();
+            saveLogs(); renderCalendar(); renderDayAttendanceList();
         }
 
-        // Hủy một ca bù thủ công
-        function removeExtraSession(studentId) {
-            sessionLogs = sessionLogs.filter(log => !(log.dateStr === selectedDateStr && log.studentId === studentId));
-            saveLogs();
-            renderCalendar();
-            renderDayAttendanceList();
-        }
+        // --- 5. BÁO CÁO CÁ NHÂN ---
+        function openStudentDetail(id) {
+            const s = students.find(x => x.id === id);
+            if(!s) return;
+            document.getElementById('detail-student-name').innerText = s.name;
+            document.getElementById('detail-student-avatar').innerText = s.name.charAt(0).toUpperCase();
+            const daysStr = s.fixedDays.map(d => DAYS_OF_WEEK.find(x => x.id === d)?.label).join(", ");
+            document.getElementById('detail-student-fixed-days').innerText = `Lịch: ${daysStr || 'Chưa có'}${s.timeSlot ? ` - ${s.timeSlot}` : ''}`;
+            document.getElementById('detail-student-start-date').innerText = `Bắt đầu: ${s.startDate !== "2000-01-01" ? formatDisplayDate(s.startDate) : "Đã học từ trước"}`;
 
-        // --- 5. BÁO CÁO LỊCH CÁ NHÂN (CHỤP ẢNH GỬI PHỤ HUYNH) ---
-
-        // Mở màn hình Báo cáo học tập cá nhân
-        function openStudentDetail(studentId, event) {
-            if (event) event.stopPropagation(); // Tránh kích hoạt click lồng
-            
-            const student = students.find(s => s.id === studentId);
-            if (!student) return;
-
-            document.getElementById('detail-student-name').innerText = student.name;
-            document.getElementById('detail-student-avatar').innerText = student.name.charAt(0).toUpperCase();
-
-            // Hiển thị lịch cố định
-            const daysStr = student.fixedDays.map(d => {
-                const found = DAYS_OF_WEEK.find(day => day.id === d);
-                return found ? found.label : "";
-            }).join(", ");
-            document.getElementById('detail-student-fixed-days').innerText = `Lịch cố định: ${daysStr || 'Chưa thiết lập'}`;
-
-            // --- TÍNH TOÁN THỐNG KÊ VÀ VẼ LỊCH CÁ NHÂN ---
             const grid = document.getElementById('detail-calendar-grid');
             grid.innerHTML = "";
+            const year = currentDate.getFullYear(), month = currentDate.getMonth();
+            document.getElementById('detail-month-title').innerText = `Tháng ${month + 1}/${year}`;
+            document.getElementById('capture-title').innerText = `BÁO CÁO - ${s.name}`;
 
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-
-            document.getElementById('detail-month-title').innerText = `Tháng ${month + 1} / ${year}`;
-            document.getElementById('capture-title').innerText = `LỊCH HỌC THÁNG ${month + 1}/${year} - ${student.name}`;
-
-            let countNormal = 0;
-            let countExtra = 0;
-            let countAbsent = 0;
-
+            let cN = 0, cE = 0, cA = 0;
             const firstDayIndex = new Date(year, month, 1).getDay(); 
-            const totalDaysInMonth = new Date(year, month + 1, 0).getDate(); 
+            const totalDays = new Date(year, month + 1, 0).getDate(); 
             const emptySlots = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
 
-            // Render ô trống đầu tháng
-            for (let i = 0; i < emptySlots; i++) {
-                grid.innerHTML += `<div class="bg-transparent"></div>`;
-            }
+            for (let i = 0; i < emptySlots; i++) grid.innerHTML += `<div></div>`;
 
-            // Render từng ngày trong tháng
-            for (let day = 1; day <= totalDaysInMonth; day++) {
-                const dateObj = new Date(year, month, day);
-                const dayOfWeek = dateObj.getDay();
-                const dateStr = formatDateKey(year, month, day);
+            for (let day = 1; day <= totalDays; day++) {
+                const dObj = new Date(year, month, day);
+                const dStr = formatDateKey(year, month, day);
+                const sess = getSessionsForDate(dStr, dObj.getDay()).find(x => x.studentId === id);
 
-                const sessions = getSessionsForDate(dateStr, dayOfWeek);
-                const mySession = sessions.find(s => s.studentId === studentId);
-
-                let bgClass = "bg-slate-50 border border-slate-100 text-slate-300"; // Trống
-                let contentHTML = "";
-                let noteHTML = "";
-
-                if (mySession) {
-                    if (mySession.status === "Normal") {
-                        countNormal++;
-                        bgClass = "bg-emerald-50 border border-emerald-200 text-emerald-700 shadow-sm";
-                        contentHTML = `<i class="fa-solid fa-check text-lg mt-1"></i>`;
-                    } else if (mySession.status === "Extra") {
-                        countExtra++;
-                        bgClass = "bg-amber-50 border border-amber-200 text-amber-700 shadow-sm";
-                        contentHTML = `<span class="text-[10px] font-black mt-1.5 uppercase font-extrabold text-amber-600 bg-amber-100/60 px-1.5 py-0.5 rounded">Bù</span>`;
-                        if(mySession.reason) noteHTML = `<div class="text-[8px] leading-[1.1] mt-1 text-amber-600 line-clamp-2 px-0.5" title="${mySession.reason}">${mySession.reason}</div>`;
-                    } else if (mySession.status === "Absent") {
-                        countAbsent++;
-                        bgClass = "bg-rose-50 border border-rose-200 text-rose-700 shadow-sm";
-                        contentHTML = `<i class="fa-solid fa-xmark text-lg mt-1 opacity-70"></i>`;
-                        if(mySession.reason) noteHTML = `<div class="text-[8px] leading-[1.1] mt-1 text-rose-600 line-clamp-2 px-0.5" title="${mySession.reason}">${mySession.reason}</div>`;
-                    }
+                let bg = "bg-slate-50 border border-slate-100", ct = "", nt = "";
+                if (sess) {
+                    if (sess.status === "Normal") { cN++; bg = "bg-emerald-50 border-emerald-200 text-emerald-700"; ct = `<i class="fa-solid fa-check mt-1"></i>`; }
+                    else if (sess.status === "Extra") { cE++; bg = "bg-amber-50 border-amber-200 text-amber-700"; ct = `<span class="text-[10px] mt-1 font-bold">BÙ</span>`; if(sess.reason) nt=`<div class="text-[8px] leading-tight mt-0.5 px-0.5 line-clamp-2">${sess.reason}</div>`; }
+                    else if (sess.status === "Absent") { cA++; bg = "bg-rose-50 border-rose-200 text-rose-700"; ct = `<i class="fa-solid fa-xmark mt-1"></i>`; if(sess.reason) nt=`<div class="text-[8px] leading-tight mt-0.5 px-0.5 line-clamp-2">${sess.reason}</div>`; }
                 }
-
-                grid.innerHTML += `
-                    <div class="${bgClass} rounded-xl p-1 h-[65px] flex flex-col items-center justify-start text-center relative overflow-hidden">
-                        <span class="font-bold text-[11px]">${day}</span>
-                        ${contentHTML}
-                        ${noteHTML}
-                    </div>
-                `;
+                grid.innerHTML += `<div class="${bg} rounded-xl p-1 h-[65px] flex flex-col items-center text-center overflow-hidden"><span class="font-bold text-[11px]">${day}</span>${ct}${nt}</div>`;
             }
+            const rem = (emptySlots + totalDays) <= 35 ? 35 - (emptySlots + totalDays) : 42 - (emptySlots + totalDays);
+            for (let i = 0; i < rem; i++) grid.innerHTML += `<div></div>`;
 
-            // Bổ sung ô trống cuối tháng cho vuông lưới
-            const totalSlotsRendered = emptySlots + totalDaysInMonth;
-            const remainingToFitGrid = totalSlotsRendered <= 35 ? 35 - totalSlotsRendered : 42 - totalSlotsRendered;
-            for (let i = 0; i < remainingToFitGrid; i++) {
-                grid.innerHTML += `<div class="bg-transparent"></div>`;
-            }
-
-            // Gắn số liệu thống kê
-            document.getElementById('detail-count-normal').innerText = countNormal;
-            document.getElementById('detail-count-extra').innerText = countExtra;
-            document.getElementById('detail-count-absent').innerText = countAbsent;
-
-            // Hiển thị modal
+            document.getElementById('detail-count-normal').innerText = cN;
+            document.getElementById('detail-count-extra').innerText = cE;
+            document.getElementById('detail-count-absent').innerText = cA;
             document.getElementById('modal-student-detail').classList.remove('hidden');
         }
+        function closeStudentDetailModal() { document.getElementById('modal-student-detail').classList.add('hidden'); }
 
-        function closeStudentDetailModal() {
-            document.getElementById('modal-student-detail').classList.add('hidden');
+
+        // --- 6. QUẢN LÝ MỐC GIỜ & LỊCH CÁ NHÂN ---
+        function openTimeSlotModal() {
+            renderTimeSlotsList();
+            document.getElementById('modal-time-slots').classList.remove('hidden');
+        }
+        function closeTimeSlotModal() {
+            document.getElementById('modal-time-slots').classList.add('hidden');
+        }
+        function renderTimeSlotsList() {
+            const list = document.getElementById('time-slots-list');
+            list.innerHTML = "";
+            timeSlots.forEach(t => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-200">
+                        <span class="font-bold text-sm">${t}</span>
+                        <button onclick="deleteTimeSlot('${t}')" class="text-rose-500 hover:bg-rose-100 p-1 rounded"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                    </div>
+                `;
+            });
+        }
+        function addTimeSlot() {
+            const val = document.getElementById('new-time-slot').value;
+            if(val && !timeSlots.includes(val)) {
+                timeSlots.push(val);
+                saveTimeSlots();
+                renderTimeSlotsList();
+                populateTimeSlotSelects();
+                renderWeeklyView();
+                document.getElementById('new-time-slot').value = "";
+            }
+        }
+        function deleteTimeSlot(val) {
+            timeSlots = timeSlots.filter(t => t !== val);
+            saveTimeSlots();
+            renderTimeSlotsList();
+            populateTimeSlotSelects();
+            renderWeeklyView();
         }
 
-        // --- 6. PHÂN TRANG THÁNG ---
+        function openPersonalEventModal() {
+            document.getElementById('add-student-form').reset(); // reset form to avoid mixups
+            document.getElementById('pe-id').value = "";
+            document.getElementById('modal-personal-event').classList.remove('hidden');
+        }
+        function closePersonalEventModal() {
+            document.getElementById('modal-personal-event').classList.add('hidden');
+        }
+        function handleSavePersonalEvent(e) {
+            e.preventDefault();
+            const id = document.getElementById('pe-id').value || "pe-" + Date.now();
+            const event = {
+                id: id,
+                name: document.getElementById('pe-name').value,
+                type: document.getElementById('pe-type').value,
+                day: parseInt(document.getElementById('pe-day').value),
+                time: document.getElementById('pe-time').value,
+                note: document.getElementById('pe-note').value
+            };
+            
+            personalEvents = personalEvents.filter(p => p.id !== id);
+            personalEvents.push(event);
+            savePersonalEvents();
+            closePersonalEventModal();
+            renderWeeklyView();
+            renderCalendar();
+        }
+        function deletePersonalEvent(id) {
+            if(confirm("Xóa lịch cá nhân này?")) {
+                personalEvents = personalEvents.filter(p => p.id !== id);
+                savePersonalEvents();
+                renderWeeklyView();
+                renderCalendar();
+            }
+        }
 
-        function prevMonth() {
-            currentDate.setMonth(currentDate.getMonth() - 1);
+        // --- 7. NAVIGATION THÁNG ---
+        function prevMonth() { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); }
+        function nextMonth() { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); }
+        function resetToCurrentMonth() {
+            currentDate = new Date();
+            currentDate.setDate(1);
             renderCalendar();
         }
 
-        function nextMonth() {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            renderCalendar();
-        }
-
-        // --- KHỞI CHẠY HỆ THỐNG ---
+        // --- KHỞI CHẠY ---
         window.onload = function() {
-            initDaysCheckboxes();
+            initAddStudentForm();
             renderStudentsList();
             renderCalendar();
         };
