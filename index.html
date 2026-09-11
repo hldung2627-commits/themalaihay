@@ -81,20 +81,22 @@
                             <input type="date" id="student-start-date" required
                                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mốc giờ học</label>
+                        <div class="hidden">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mốc giờ học (Cũ)</label>
                             <select id="student-time-slot" 
                                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                                 <option value="">-- Chưa xếp giờ --</option>
-                                <!-- JS sẽ render mốc giờ vào đây -->
                             </select>
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Lịch học cố định trong tuần</label>
-                        <div class="grid grid-cols-4 gap-2" id="days-checkbox-group">
-                            <!-- JS tự động render các nút Thứ -->
+                        <div class="grid grid-cols-4 sm:grid-cols-7 gap-2 mb-3" id="days-checkbox-group">
+                            <!-- JS tự động render các nút Thứ dạng toggle -->
+                        </div>
+                        <div id="day-time-configs" class="space-y-3">
+                            <!-- JS render cấu hình giờ cho từng ngày được chọn -->
                         </div>
                     </div>
                     
@@ -265,11 +267,16 @@
                     <!-- Khu vực thêm nhanh học sinh học bù -->
                     <div id="add-extra-student-section" class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-3 hidden">
                         <h5 class="text-xs font-bold text-slate-700">Thêm ca bù cho học sinh bất kỳ</h5>
-                        <div class="flex gap-2">
-                            <select id="extra-student-select" class="flex-1 px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none">
+                        <div class="flex flex-col gap-2">
+                            <select id="extra-student-select" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none">
                             </select>
-                            <button onclick="addExtraStudentToDay()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition-all">
-                                Thêm ca
+                            <div class="flex gap-2 items-center">
+                                <span class="text-xs text-slate-500 w-16">Mốc giờ:</span>
+                                <select id="extra-time-slot" class="flex-1 px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none">
+                                </select>
+                            </div>
+                            <button onclick="addExtraStudentToDay()" class="w-full mt-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition-all">
+                                Lưu ca bù
                             </button>
                         </div>
                     </div>
@@ -286,140 +293,42 @@
         </div>
     </div>
 
-    <!-- Modal 2: Báo cáo Học tập Cá nhân -->
-    <div id="modal-student-detail" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full transform scale-95 transition-all my-auto">
-            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-2xl">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-md shadow-blue-100" id="detail-student-avatar">
+    <!-- Modal 6: Edit Student -->
+    <div id="modal-edit-student" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col transform scale-95 transition-all">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-2xl shrink-0">
+                <h3 class="font-bold text-base text-slate-900">Sửa Thông Tin Học Sinh</h3>
+                <button onclick="closeEditStudentModal()" class="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <form id="edit-student-form" onsubmit="handleSaveEditStudent(event)" class="space-y-4">
+                    <input type="hidden" id="edit-student-id">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Họ và tên</label>
+                        <input type="text" id="edit-student-name" required class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all">
                     </div>
                     <div>
-                        <h3 class="font-bold text-base text-slate-900" id="detail-student-name">Học sinh</h3>
-                        <p class="text-[10px] text-slate-500" id="detail-student-start-date">Ngày bắt đầu: --/--/----</p>
-                        <p class="text-[10px] text-slate-500 font-medium" id="detail-student-fixed-days">Lịch: ...</p>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Ngày bắt đầu</label>
+                        <input type="date" id="edit-student-start-date" required class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all">
                     </div>
-                </div>
-                <button onclick="closeStudentDetailModal()" class="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
-            </div>
-
-            <div class="p-6">
-                <div class="flex justify-between items-end mb-4">
-                    <h4 class="font-bold text-lg text-slate-900" id="detail-month-title">Tháng ...</h4>
-                    <span class="text-xs text-slate-500 italic">*Có thể chụp phần này gửi Phụ huynh</span>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 mb-6">
-                    <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center">
-                        <p class="text-[11px] text-emerald-600 font-bold uppercase mb-0.5">Đi học</p>
-                        <p class="text-2xl font-black text-emerald-700" id="detail-count-normal">0</p>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Cấu hình Lịch học</label>
+                        <div class="grid grid-cols-4 sm:grid-cols-7 gap-2 mb-3" id="edit-days-checkbox-group">
+                            <!-- JS render toggle buttons -->
+                        </div>
+                        <div id="edit-day-time-configs" class="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <!-- JS render time configs for selected days -->
+                        </div>
                     </div>
-                    <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
-                        <p class="text-[11px] text-amber-600 font-bold uppercase mb-0.5">Học bù</p>
-                        <p class="text-2xl font-black text-amber-700" id="detail-count-extra">0</p>
+                    <div class="pt-4 flex justify-end gap-2">
+                        <button type="button" onclick="closeEditStudentModal()" class="px-4 py-2 rounded-xl text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">Hủy</button>
+                        <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition-all">Lưu thay đổi</button>
                     </div>
-                    <div class="bg-rose-50 border border-rose-100 rounded-xl p-3 text-center">
-                        <p class="text-[11px] text-rose-600 font-bold uppercase mb-0.5">Nghỉ học</p>
-                        <p class="text-2xl font-black text-rose-700" id="detail-count-absent">0</p>
-                    </div>
-                </div>
-
-                <div class="border-2 border-slate-100 rounded-2xl p-4 bg-white relative">
-                    <h4 class="text-sm font-bold text-blue-800 mb-4 text-center uppercase tracking-wide" id="capture-title">BÁO CÁO HỌC TẬP</h4>
-                    <div class="grid grid-cols-7 text-center gap-1 mb-2">
-                        <div class="text-[11px] font-bold text-slate-400 py-1">T2</div>
-                        <div class="text-[11px] font-bold text-slate-400 py-1">T3</div>
-                        <div class="text-[11px] font-bold text-slate-400 py-1">T4</div>
-                        <div class="text-[11px] font-bold text-slate-400 py-1">T5</div>
-                        <div class="text-[11px] font-bold text-slate-400 py-1">T6</div>
-                        <div class="text-[11px] font-bold text-slate-400 py-1">T7</div>
-                        <div class="text-[11px] font-bold text-red-400 py-1">CN</div>
-                    </div>
-                    <div id="detail-calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
-                    <div class="mt-5 pt-3 border-t border-slate-100 flex justify-center gap-6 text-xs text-slate-600 font-medium">
-                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-200"></span> Đi Học</div>
-                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-200"></span> Học Bù</div>
-                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-100 border border-rose-200"></span> Nghỉ Học</div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end rounded-b-2xl">
-                <button onclick="closeStudentDetailModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all shadow-md">Đã hiểu</button>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Modal 3: Quản lý Mốc giờ -->
-    <div id="modal-time-slots" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-sm w-full transform scale-95 transition-all">
-            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-2xl">
-                <h3 class="font-bold text-base text-slate-900">Quản lý Mốc Giờ</h3>
-                <button onclick="closeTimeSlotModal()" class="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all"><i class="fa-solid fa-xmark text-sm"></i></button>
-            </div>
-            <div class="p-6">
-                <div class="flex gap-2 mb-4">
-                    <input type="time" id="new-time-slot" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500">
-                    <button onclick="addTimeSlot()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Thêm</button>
-                </div>
-                <div id="time-slots-list" class="space-y-2 max-h-[250px] overflow-y-auto">
-                    <!-- Render time slots -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 4: Thêm Lịch Cá Nhân / Học Cá Nhân -->
-    <div id="modal-personal-event" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full transform scale-95 transition-all">
-            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-2xl">
-                <h3 class="font-bold text-base text-slate-900">Thêm Lịch Cá Nhân</h3>
-                <button onclick="closePersonalEventModal()" class="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all"><i class="fa-solid fa-xmark text-sm"></i></button>
-            </div>
-            <form onsubmit="handleSavePersonalEvent(event)" class="p-6 space-y-4">
-                <input type="hidden" id="pe-id">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tên hoạt động</label>
-                    <input type="text" id="pe-name" required placeholder="VD: Học Giải Tích" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Loại lịch</label>
-                    <select id="pe-type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
-                        <option value="study">📚 Lịch học của tôi</option>
-                        <option value="personal">📝 Việc cá nhân</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Thứ</label>
-                        <select id="pe-day" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
-                            <option value="1">Thứ 2</option>
-                            <option value="2">Thứ 3</option>
-                            <option value="3">Thứ 4</option>
-                            <option value="4">Thứ 5</option>
-                            <option value="5">Thứ 6</option>
-                            <option value="6">Thứ 7</option>
-                            <option value="0">Chủ Nhật</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mốc giờ</label>
-                        <select id="pe-time" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
-                            <!-- Populated dynamically -->
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Ghi chú (Tùy chọn)</label>
-                    <input type="text" id="pe-note" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
-                </div>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closePersonalEventModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-100 hover:bg-slate-200 font-bold">Hủy</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg text-sm bg-blue-600 text-white font-bold">Lưu lại</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <script>
         // --- 1. KHỞI TẠO STATE & HẰNG SỐ ---
@@ -451,7 +360,7 @@
         let timeSlots = JSON.parse(localStorage.getItem('timeSlots')) || ["08:00", "14:00", "18:00", "19:30"];
         let personalEvents = JSON.parse(localStorage.getItem('personalEvents')) || [];
 
-        // MIGRATION: Cập nhật dữ liệu cũ nếu chưa có startDate, timeSlot
+        // MIGRATION: Cập nhật dữ liệu cũ nếu chưa có startDate, timeSlot, hoặc schedules
         let dataMigrated = false;
         students.forEach(s => {
             if (!s.startDate) {
@@ -459,14 +368,35 @@
                 dataMigrated = true;
             }
             if (s.timeSlot === undefined) {
-                s.timeSlot = ""; // Chưa gán giờ
+                s.timeSlot = ""; 
                 dataMigrated = true;
             }
+            // MIGRATION TO NEW SCHEDULES STRUCTURE
+            if (!s.schedules) {
+                s.schedules = [];
+                if (s.fixedDays && Array.isArray(s.fixedDays)) {
+                    s.fixedDays.forEach(dayId => {
+                        s.schedules.push({
+                            day: dayId,
+                            startTime: s.timeSlot || "",
+                            endTime: "" // Support cho tương lai nếu cần
+                        });
+                    });
+                }
+                dataMigrated = true;
+            }
+            // Also ensure fixedDays matches schedules for backwards compatibility in some views if needed, 
+            // though we should prefer using schedules everywhere.
+            s.fixedDays = s.schedules.map(sch => sch.day);
         });
         if (dataMigrated) saveStudents();
         timeSlots.sort(); // Đảm bảo luôn sort mốc giờ
 
         let selectedDateStr = "";
+        
+        // Cấu hình tạm cho form thêm/sửa học sinh
+        let currentAddSchedules = []; 
+        let currentEditSchedules = [];
 
         // --- CÁC HÀM LƯU DỮ LIỆU ---
         function saveStudents() { localStorage.setItem('students', JSON.stringify(students)); }
@@ -479,34 +409,121 @@
 
 
         // --- 2. RENDER GIAO DIỆN CHÍNH ---
-        function initAddStudentForm() {
-            const container = document.getElementById('days-checkbox-group');
+        function renderDayToggles(containerId, activeDays, onChangeCallback) {
+            const container = document.getElementById(containerId);
             container.innerHTML = "";
             DAYS_OF_WEEK.forEach(day => {
+                const isActive = activeDays.includes(day.id);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `p-2 rounded-xl border text-[11px] font-bold transition-all ${isActive ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`;
+                btn.innerText = day.label;
+                btn.onclick = () => onChangeCallback(day.id, !isActive);
+                container.appendChild(btn);
+            });
+        }
+
+        function renderDayTimeConfigs(containerId, schedules, timeSlotsList) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = "";
+            
+            if (schedules.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-slate-400 italic">Chưa chọn ngày học nào.</p>`;
+                return;
+            }
+
+            // Sort schedules by day (Mon -> Sun)
+            const sortedSchedules = [...schedules].sort((a, b) => {
+                const mapId = id => id === 0 ? 7 : id; // Map Sun(0) to 7 for sorting
+                return mapId(a.day) - mapId(b.day);
+            });
+
+            sortedSchedules.forEach((sch, index) => {
+                const dayLabel = DAYS_OF_WEEK.find(d => d.id === sch.day)?.label || '';
+                
+                let timeOptions = `<option value="">-- Chọn giờ --</option>`;
+                timeSlotsList.forEach(t => {
+                    const selectedStart = sch.startTime === t ? 'selected' : '';
+                    timeOptions += `<option value="${t}" ${selectedStart}>${t}</option>`;
+                });
+                
+                // Cấu trúc cho giờ kết thúc (Tương lai có thể map duration)
+                let endTimeOptions = `<option value="">-- (Tùy chọn) --</option>`;
+                timeSlotsList.forEach(t => {
+                    const selectedEnd = sch.endTime === t ? 'selected' : '';
+                    endTimeOptions += `<option value="${t}" ${selectedEnd}>${t}</option>`;
+                });
+
                 container.innerHTML += `
-                    <label class="cursor-pointer flex flex-col items-center p-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all">
-                        <input type="checkbox" name="fixed-days" value="${day.id}" class="rounded text-blue-600 focus:ring-blue-500 mb-1">
-                        <span class="text-[11px] font-bold text-slate-600">${day.label}</span>
-                    </label>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <span class="w-16 font-bold text-xs text-slate-700">${dayLabel}</span>
+                        <div class="flex-1 flex gap-2">
+                            <div class="flex-1">
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Bắt đầu</label>
+                                <select onchange="updateScheduleTime('${containerId}', ${sch.day}, 'start', this.value)" class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-blue-500">
+                                    ${timeOptions}
+                                </select>
+                            </div>
+                            <div class="flex-1 hidden">
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Kết thúc</label>
+                                <select onchange="updateScheduleTime('${containerId}', ${sch.day}, 'end', this.value)" class="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-blue-500">
+                                    ${endTimeOptions}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 `;
             });
+        }
+
+        function updateScheduleTime(containerId, dayId, type, value) {
+            const schedules = containerId.includes('edit') ? currentEditSchedules : currentAddSchedules;
+            const sch = schedules.find(s => s.day === dayId);
+            if (sch) {
+                if (type === 'start') sch.startTime = value;
+                if (type === 'end') sch.endTime = value;
+            }
+        }
+
+        function handleAddDayToggle(dayId, isAdding) {
+            if (isAdding) {
+                if (!currentAddSchedules.find(s => s.day === dayId)) {
+                    currentAddSchedules.push({ day: dayId, startTime: "", endTime: "" });
+                }
+            } else {
+                currentAddSchedules = currentAddSchedules.filter(s => s.day !== dayId);
+            }
+            refreshAddStudentFormConfigs();
+        }
+
+        function refreshAddStudentFormConfigs() {
+            renderDayToggles('days-checkbox-group', currentAddSchedules.map(s => s.day), handleAddDayToggle);
+            renderDayTimeConfigs('day-time-configs', currentAddSchedules, timeSlots);
+        }
+
+        function initAddStudentForm() {
+            currentAddSchedules = [];
+            refreshAddStudentFormConfigs();
             document.getElementById('student-start-date').value = getTodayString();
             populateTimeSlotSelects();
         }
 
         function populateTimeSlotSelects() {
-            const studentSelect = document.getElementById('student-time-slot');
             const eventSelect = document.getElementById('pe-time');
+            const extraSelect = document.getElementById('extra-time-slot');
             
-            let html = `<option value="">-- Chưa xếp giờ --</option>`;
             let eventHtml = '';
+            let extraHtml = `<option value="">-- Tự do --</option>`;
             timeSlots.forEach(t => {
-                html += `<option value="${t}">${t}</option>`;
                 eventHtml += `<option value="${t}">${t}</option>`;
+                extraHtml += `<option value="${t}">${t}</option>`;
             });
             
-            studentSelect.innerHTML = html;
             eventSelect.innerHTML = eventHtml;
+            if(extraSelect) extraSelect.innerHTML = extraHtml;
+            
+            // Refresh configs in forms to reflect new timeslots
+            refreshAddStudentFormConfigs();
         }
 
         function formatDateKey(year, month, day) {
@@ -531,18 +548,27 @@
             }
 
             filtered.forEach(student => {
-                const daysStr = student.fixedDays.map(d => DAYS_OF_WEEK.find(day => day.id === d)?.label).join(", ");
-                const timeStr = student.timeSlot ? ` - ${student.timeSlot}` : "";
+                let schedulesStr = "";
+                if (student.schedules && student.schedules.length > 0) {
+                    schedulesStr = student.schedules.map(sch => {
+                        const d = DAYS_OF_WEEK.find(x => x.id === sch.day)?.label || '';
+                        return `${d}(${sch.startTime || '?'})`;
+                    }).join(", ");
+                }
+                
                 const startStr = student.startDate !== "2000-01-01" ? `Bắt đầu: ${formatDisplayDate(student.startDate)}` : "Đã học từ trước";
 
                 container.innerHTML += `
                     <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between group hover:bg-white hover:shadow-sm transition-all">
                         <div class="min-w-0 flex-1 cursor-pointer" onclick="openStudentDetail('${student.id}')">
                             <h4 class="font-bold text-sm text-slate-900 truncate">${student.name}</h4>
-                            <p class="text-[11px] text-slate-500 mt-0.5"><span class="font-bold text-blue-600">${daysStr || 'Chưa có'}${timeStr}</span></p>
+                            <p class="text-[11px] text-slate-500 mt-0.5"><span class="font-bold text-blue-600">${schedulesStr || 'Chưa xếp lịch'}</span></p>
                             <p class="text-[10px] text-slate-400 mt-0.5">${startStr}</p>
                         </div>
                         <div class="flex items-center gap-1">
+                            <button onclick="openEditStudentModal('${student.id}')" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100" title="Sửa thông tin">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
                             <button onclick="openStudentDetail('${student.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Báo cáo Lịch cá nhân">
                                 <i class="fa-solid fa-file-invoice text-xs"></i>
                             </button>
@@ -555,24 +581,26 @@
             });
         }
 
-        // Cập nhật hàm lấy buổi học, tích hợp kiểm tra startDate
+        // Cập nhật hàm lấy buổi học, tích hợp kiểm tra startDate và schedules
         function getSessionsForDate(dateStr, dayOfWeek) {
             let activeSessions = [];
 
             // 1. Học sinh cố định
             students.forEach(student => {
-                // KIỂM TRA NGÀY BẮT ĐẦU: Không sinh lịch nếu ngày hiện tại < ngày bắt đầu
-                if (student.fixedDays.includes(dayOfWeek) && dateStr >= student.startDate) {
+                // Find if student has a schedule for this day
+                const scheduleForDay = student.schedules ? student.schedules.find(sch => sch.day === dayOfWeek) : null;
+                
+                if (scheduleForDay && dateStr >= student.startDate) {
                     const log = sessionLogs.find(l => l.dateStr === dateStr && l.studentId === student.id);
                     if (log) {
                         activeSessions.push({
                             studentId: student.id, studentName: student.name,
-                            status: log.status, reason: log.reason || "", isFixed: true, timeSlot: student.timeSlot
+                            status: log.status, reason: log.reason || "", isFixed: true, timeSlot: scheduleForDay.startTime // Lấy giờ của ngày này
                         });
                     } else {
                         activeSessions.push({
                             studentId: student.id, studentName: student.name,
-                            status: "Normal", reason: "", isFixed: true, timeSlot: student.timeSlot
+                            status: "Normal", reason: "", isFixed: true, timeSlot: scheduleForDay.startTime // Lấy giờ của ngày này
                         });
                     }
                 }
@@ -587,7 +615,7 @@
                         if (student) {
                             activeSessions.push({
                                 studentId: student.id, studentName: student.name,
-                                status: "Extra", reason: log.reason || "", isFixed: false, timeSlot: student.timeSlot // Ca bù có thể không có giờ cố định
+                                status: "Extra", reason: log.reason || "", isFixed: false, timeSlot: log.timeSlot || "" // Lấy giờ lưu trong log
                             });
                         }
                     }
@@ -712,10 +740,13 @@
                 
                 // Lọc Học sinh
                 students.forEach(s => {
-                    if(s.fixedDays.includes(dayId) && s.timeSlot === timeSlotStr) {
-                        cellHtml += `<div class="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[9px] sm:text-[11px] px-1 py-0.5 rounded shadow-sm font-bold truncate cursor-pointer leading-tight shrink-0" onclick="openStudentDetail('${s.id}')" title="${s.name} - Dạy học">
-                            ${s.name}
-                        </div>`;
+                    if (s.schedules) {
+                        const sch = s.schedules.find(sch => sch.day === dayId);
+                        if (sch && sch.startTime === timeSlotStr) {
+                            cellHtml += `<div class="bg-emerald-100 border border-emerald-200 text-emerald-800 text-[9px] sm:text-[11px] px-1 py-0.5 rounded shadow-sm font-bold truncate cursor-pointer leading-tight shrink-0" onclick="openStudentDetail('${s.id}')" title="${s.name} - Dạy học">
+                                ${s.name}
+                            </div>`;
+                        }
                     }
                 });
 
@@ -783,29 +814,90 @@
             e.preventDefault();
             const name = document.getElementById('student-name').value.trim();
             const startDate = document.getElementById('student-start-date').value;
-            const timeSlot = document.getElementById('student-time-slot').value;
             if (!name) return;
 
-            const checkedBoxes = document.querySelectorAll('input[name="fixed-days"]:checked');
-            const fixedDays = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+            // Lọc bỏ những schedule rỗng nếu có (không chọn giờ) - tùy logic, ở đây cho phép rỗng giờ (Chưa xếp)
+            const schedulesToSave = currentAddSchedules.map(s => ({...s}));
 
             const newStudent = {
                 id: "std-" + Date.now(),
                 name: name,
                 startDate: startDate || getTodayString(),
-                timeSlot: timeSlot,
-                fixedDays: fixedDays
+                schedules: schedulesToSave,
+                fixedDays: schedulesToSave.map(s => s.day) // Giữ cho tương thích map cũ
             };
 
             students.push(newStudent);
             saveStudents();
             
             document.getElementById('student-name').value = "";
-            checkedBoxes.forEach(cb => cb.checked = false);
+            initAddStudentForm(); // Reset form configs
 
             renderStudentsList();
             renderCalendar();
             renderWeeklyView();
+        }
+
+        function handleEditDayToggle(dayId, isAdding) {
+            if (isAdding) {
+                if (!currentEditSchedules.find(s => s.day === dayId)) {
+                    currentEditSchedules.push({ day: dayId, startTime: "", endTime: "" });
+                }
+            } else {
+                currentEditSchedules = currentEditSchedules.filter(s => s.day !== dayId);
+            }
+            refreshEditStudentFormConfigs();
+        }
+
+        function refreshEditStudentFormConfigs() {
+            renderDayToggles('edit-days-checkbox-group', currentEditSchedules.map(s => s.day), handleEditDayToggle);
+            renderDayTimeConfigs('edit-day-time-configs', currentEditSchedules, timeSlots);
+        }
+
+        function openEditStudentModal(id) {
+            const student = students.find(s => s.id === id);
+            if (!student) return;
+
+            document.getElementById('edit-student-id').value = student.id;
+            document.getElementById('edit-student-name').value = student.name;
+            document.getElementById('edit-student-start-date').value = student.startDate;
+            
+            // Deep copy schedules to avoid modifying original until saved
+            currentEditSchedules = student.schedules ? JSON.parse(JSON.stringify(student.schedules)) : [];
+            
+            refreshEditStudentFormConfigs();
+            document.getElementById('modal-edit-student').classList.remove('hidden');
+        }
+
+        function closeEditStudentModal() {
+            document.getElementById('modal-edit-student').classList.add('hidden');
+        }
+
+        function handleSaveEditStudent(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-student-id').value;
+            const name = document.getElementById('edit-student-name').value.trim();
+            const startDate = document.getElementById('edit-student-start-date').value;
+            
+            const studentIndex = students.findIndex(s => s.id === id);
+            if (studentIndex === -1) return;
+
+            students[studentIndex].name = name;
+            students[studentIndex].startDate = startDate;
+            students[studentIndex].schedules = [...currentEditSchedules];
+            students[studentIndex].fixedDays = currentEditSchedules.map(s => s.day);
+
+            saveStudents();
+            closeEditStudentModal();
+            renderStudentsList();
+            renderCalendar();
+            renderWeeklyView();
+            
+            // If viewing details for this student, update it
+            if(!document.getElementById('modal-student-detail').classList.contains('hidden') && 
+                document.getElementById('detail-student-name').innerText === students[studentIndex].name) {
+                 openStudentDetail(id);
+            }
         }
 
         function deleteStudent(id) {
@@ -849,8 +941,10 @@
 
         function addExtraStudentToDay() {
             const studentId = document.getElementById('extra-student-select').value;
+            const timeSlot = document.getElementById('extra-time-slot').value;
             if (!studentId) return;
-            sessionLogs.push({ dateStr: selectedDateStr, studentId: studentId, status: "Extra", reason: "" });
+            // Lưu kèm timeSlot cho ca bù
+            sessionLogs.push({ dateStr: selectedDateStr, studentId: studentId, status: "Extra", reason: "", timeSlot: timeSlot });
             saveLogs();
             renderCalendar();
             renderDayAttendanceList();
@@ -964,8 +1058,16 @@
             if(!s) return;
             document.getElementById('detail-student-name').innerText = s.name;
             document.getElementById('detail-student-avatar').innerText = s.name.charAt(0).toUpperCase();
-            const daysStr = s.fixedDays.map(d => DAYS_OF_WEEK.find(x => x.id === d)?.label).join(", ");
-            document.getElementById('detail-student-fixed-days').innerText = `Lịch: ${daysStr || 'Chưa có'}${s.timeSlot ? ` - ${s.timeSlot}` : ''}`;
+            
+            let schedulesStr = "";
+            if (s.schedules && s.schedules.length > 0) {
+                schedulesStr = s.schedules.map(sch => {
+                    const d = DAYS_OF_WEEK.find(x => x.id === sch.day)?.label || '';
+                    return `${d} (${sch.startTime || '?'})`;
+                }).join(" | ");
+            }
+            
+            document.getElementById('detail-student-fixed-days').innerText = `Lịch: ${schedulesStr || 'Chưa có'}`;
             document.getElementById('detail-student-start-date').innerText = `Bắt đầu: ${s.startDate !== "2000-01-01" ? formatDisplayDate(s.startDate) : "Đã học từ trước"}`;
 
             const grid = document.getElementById('detail-calendar-grid');
@@ -1045,7 +1147,8 @@
         }
 
         function openPersonalEventModal() {
-            document.getElementById('add-student-form').reset(); // reset form to avoid mixups
+            // document.getElementById('add-student-form').reset(); // Removed as it clears the complex setup
+            initAddStudentForm();
             document.getElementById('pe-id').value = "";
             document.getElementById('modal-personal-event').classList.remove('hidden');
         }
@@ -1097,6 +1200,7 @@
                 closeTimeSlotModal();
                 closeStudentDetailModal();
                 closeDayModal();
+                closeEditStudentModal();
             }
         });
 
